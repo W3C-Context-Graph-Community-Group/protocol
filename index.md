@@ -4,6 +4,26 @@ This is the working specification for the **Context Graph** protocol, developed 
 
 ---
 
+## Getting Started
+
+All spec pages and demo codebooks live on GitHub Pages. Boundary logs are CSV files committed to git — diffable, versionable, auditable.
+
+**To start measuring:**
+
+1. Fork this repo
+2. Add your system under `demo/systems/{your-name}/`
+3. Create `context/`, `meaning/`, `structure/`, and `data/` folders with your codebook
+4. Run the protocol against another system
+5. Commit your boundary log as a CSV under `demo/boundaries/{you}--{them}/log.csv`
+
+No infrastructure needed beyond a GitHub account.
+
+## Contributing Measurements
+
+Fork the repo into your own GitHub account. Add your system folder under `demo/systems/{your-name}/` with your context, meaning, structure, and data files. Commit boundary logs as CSV files. Submit a pull request if you want your measurements in the shared repo. All free. No paid account needed.
+
+---
+
 ## Vocabulary (Canonical Claim Form)
 
 Every claim is a five-column row:
