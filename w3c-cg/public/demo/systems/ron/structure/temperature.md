@@ -1,6 +1,6 @@
 # Structure: temperature
 
-**Asserter:** [Ron's system](https://w3c-cg.github.io/context-graph/demo/systems/ron)
+**Source:** [Ron's system](https://w3c-cg.github.io/context-graph/demo/systems/ron)
 
 ## Specification
 

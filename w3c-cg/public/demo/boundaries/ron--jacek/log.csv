@@ -1,4 +1,4 @@
-entity,asserter,timestamp,key,value
+id,source,timestamp,key,value
 urn:boundary:ron-jacek,https://w3c-cg.github.io/context-graph/demo/systems/ron,2026-03-30T10:00:00.000Z,https://w3c-cg.github.io/context-graph/protocol/syn,7a3f9b2e
 urn:boundary:ron-jacek,https://w3c-cg.github.io/context-graph/demo/systems/jacek,2026-03-30T10:00:00.347Z,https://w3c-cg.github.io/context-graph/protocol/syn-ack,c4d5e6f7:sha256(7a3f9b2e)
 urn:boundary:ron-jacek,https://w3c-cg.github.io/context-graph/demo/systems/ron,2026-03-30T10:00:00.712Z,https://w3c-cg.github.io/context-graph/protocol/ack,sha256(c4d5e6f7)

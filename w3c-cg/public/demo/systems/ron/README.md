@@ -1,6 +1,6 @@
 # Ron's System
 
-**Asserter URI:** `https://w3c-cg.github.io/context-graph/demo/systems/ron`
+**Source URI:** `https://w3c-cg.github.io/context-graph/demo/systems/ron`
 
 ## Domain
 

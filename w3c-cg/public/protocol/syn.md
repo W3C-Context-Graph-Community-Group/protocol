@@ -9,7 +9,7 @@ The initiating system sends a SYN claim to establish a boundary with another sys
 - **State transition:** `NULL → SYN-SENT`
 - **Key:** `https://w3c-cg.github.io/context-graph/protocol/syn`
 - **Value:** A cryptographic nonce (random hex string)
-- **Entity:** A boundary URI minted by the initiator
+- **Id:** A boundary URI minted by the initiator
 
 ## Semantics
 
@@ -22,7 +22,7 @@ If no [syn-ack](syn-ack.md) is received within the configured timeout, the initi
 ## Example
 
 ```csv
-entity,asserter,timestamp,key,value
+id,source,timestamp,key,value
 urn:boundary:ron-jacek,https://w3c-cg.../demo/systems/ron,2026-03-30T10:00:00.000Z,https://w3c-cg.../protocol/syn,7a3f9b2e
 ```
 

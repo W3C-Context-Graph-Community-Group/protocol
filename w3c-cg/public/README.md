@@ -14,8 +14,8 @@ Two systems exchange data. The bits arrive unchanged. The meaning may not. This 
 context-graph/
 │
 ├── vocab/                     ← THE SPEC: Column definitions
-│   ├── entity.md              Column 1: what is this claim about?
-│   ├── asserter.md            Column 2: who makes this claim?
+│   ├── id.md                  Column 1: what is this claim about?
+│   ├── source.md              Column 2: who makes this claim?
 │   ├── timestamp.md           Column 3: when?
 │   ├── key.md                 Column 4: what property?
 │   └── value.md               Column 5: what assertion?
@@ -67,14 +67,14 @@ context-graph/
 
 Every assertion from every system reduces to one row in a five-column table:
 
-| entity | asserter | timestamp | key | value |
+| id | source | timestamp | key | value |
 |--------|----------|-----------|-----|-------|
 | What is this about? | Who says so? | When? | What property? | What assertion? |
 
 The five columns are informationally irreducible. Remove any one and the protocol breaks:
 
-- No **entity** → claims become unlinkable
-- No **asserter** → cannot tell which side of the boundary produced the claim
+- No **id** → claims become unlinkable
+- No **source** → cannot tell which side of the boundary produced the claim
 - No **timestamp** → cannot detect drift or reconstruct sequence
 - No **key** → no edges form; the graph collapses to a flat log
 - No **value** → nothing to compare

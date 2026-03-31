@@ -1,6 +1,6 @@
 # Context: temperature
 
-**Asserter:** [Jacek's system](https://w3c-cg.github.io/context-graph/demo/systems/jacek)
+**Source:** [Jacek's system](https://w3c-cg.github.io/context-graph/demo/systems/jacek)
 
 ## Context declarations
 

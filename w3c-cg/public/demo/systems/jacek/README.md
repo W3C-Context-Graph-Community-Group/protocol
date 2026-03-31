@@ -1,6 +1,6 @@
 # Jacek's System
 
-**Asserter URI:** `https://w3c-cg.github.io/context-graph/demo/systems/jacek`
+**Source URI:** `https://w3c-cg.github.io/context-graph/demo/systems/jacek`
 
 ## Domain
 
