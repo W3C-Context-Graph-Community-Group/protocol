@@ -9,13 +9,13 @@ const PORT = process.env.PORT || 3000;
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
-// Serve static files (CSV, images, etc.)
-app.use(express.static(__dirname));
-
-// Interactive protocol demo
+// Interactive protocol demo (must precede static middleware to avoid demo/ directory redirect)
 app.get('/demo', (req, res) => {
   res.render('demo', { title: 'Context Graph Protocol — Interactive Demo' });
 });
+
+// Serve static files (CSV, images, etc.)
+app.use(express.static(__dirname));
 
 // Render markdown files as HTML
 app.use((req, res, next) => {

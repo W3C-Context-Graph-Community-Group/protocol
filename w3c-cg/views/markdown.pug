@@ -23,15 +23,6 @@ html
       a:hover { text-decoration: underline; }
       blockquote { border-left: 4px solid #dfe2e5; margin: 0; padding: 0 1em; color: #6a737d; }
   body
-    nav
-      a(href="/") Home
-      |  &middot;
-      a(href="/vocab/entity") Vocab
-      |  &middot;
-      a(href="/protocol/syn") Protocol
-      |  &middot;
-      a(href="/facet/context") Facets
-      |  &middot;
-      a(href="/demo/systems/ron") Demo
-    hr
-    !{content}
+    nav(style="font-size: 0.85rem; margin-bottom: 1rem;")
+      a(href="/demo") Interactive Demo
+    div!= content
