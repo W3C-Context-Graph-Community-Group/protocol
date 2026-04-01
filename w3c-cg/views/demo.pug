@@ -256,6 +256,40 @@ html
       }
       #verdict-box strong { color: #d73a49; }
 
+      #verify-box {
+        display: none;
+        padding: 0.75rem;
+        border-radius: 6px;
+        background: #f0f9ff;
+        border: 1px solid #0366d6;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        margin-top: 1rem;
+      }
+      .verify-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        margin: 0.3rem 0;
+      }
+      .verify-table th {
+        background: #f6f8fa;
+        padding: 0.3rem 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #e1e4e8;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #586069;
+      }
+      .verify-table td {
+        padding: 0.3rem 0.5rem;
+        border-bottom: 1px solid #eaecef;
+        vertical-align: top;
+      }
+      .verify-table code.hash { font-size: 0.7rem; word-break: break-all; }
+      .verify-pass { color: #28a745; font-weight: 700; }
+      .verify-fail { color: #d73a49; font-weight: 700; }
+
       .concept-toggle {
         display: inline-block;
         margin-top: 0.5rem;
@@ -357,6 +391,7 @@ html
           button#btn-facets(onclick="beginFacets()" disabled) Begin Facet Evaluation
           button#btn-teardown(onclick="initTeardown()" disabled) Initiate Teardown
           button#btn-csv(onclick="downloadCSV()" disabled) Download log.csv
+          button#btn-verify(onclick="verifyHandshake()" disabled) Verify Handshake
 
         #log-container
           h3 Protocol Log
@@ -394,6 +429,7 @@ html
                   th Status
               tbody#interp-body
           #verdict-box
+          #verify-box
 
       section#system-b.system-panel
         h2 Jacek — Clinical

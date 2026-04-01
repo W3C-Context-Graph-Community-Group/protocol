@@ -146,6 +146,7 @@ const $btnSyn      = document.getElementById('btn-syn');
 const $btnFacets   = document.getElementById('btn-facets');
 const $btnTeardown = document.getElementById('btn-teardown');
 const $btnCsv      = document.getElementById('btn-csv');
+const $btnVerify   = document.getElementById('btn-verify');
 const $statInterps = document.getElementById('stat-interps');
 const $statBits    = document.getElementById('stat-bits');
 const $statAction  = document.getElementById('stat-action');
@@ -424,6 +425,7 @@ async function sendSyn() {
   updateConcept('jacek', 'init', { status: 'initialized', data: { value: '30' } });
 
   $btnFacets.disabled = false;
+  $btnVerify.disabled = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -605,6 +607,55 @@ async function initTeardown() {
 }
 
 // ---------------------------------------------------------------------------
+// SHA-256 Handshake Verification
+// ---------------------------------------------------------------------------
+async function verifyHandshake() {
+  const $box = document.getElementById('verify-box');
+  if (!$box) return;
+
+  // Find the handshake rows
+  const synRow    = state.log.find(c => c.key === keyURI('protocol/syn'));
+  const synAckRow = state.log.find(c => c.key === keyURI('protocol/syn-ack'));
+  const ackRow    = state.log.find(c => c.key === keyURI('protocol/ack'));
+
+  if (!synRow || !synAckRow || !ackRow) {
+    $box.style.display = 'block';
+    $box.innerHTML = '<strong>Cannot verify:</strong> handshake has not completed yet.';
+    return;
+  }
+
+  const synNonce = synRow.value;
+  const colonIdx = synAckRow.value.indexOf(':');
+  const synAckNonce = synAckRow.value.slice(0, colonIdx);
+  const synAckHash  = synAckRow.value.slice(colonIdx + 1);
+  const ackHash = ackRow.value;
+
+  const expected1 = await sha256(synNonce);
+  const check1 = expected1 === synAckHash;
+
+  const expected2 = await sha256(synAckNonce);
+  const check2 = expected2 === ackHash;
+
+  const overall = check1 && check2;
+  const tag = function(pass) { return pass ? '<span class="verify-pass">PASS</span>' : '<span class="verify-fail">FAIL</span>'; };
+
+  $box.style.display = 'block';
+  $box.innerHTML =
+    '<strong>SHA-256 Handshake Verification</strong><br><br>' +
+    '<table class="verify-table">' +
+    '<tr><th>Step</th><th>Check</th><th>Result</th></tr>' +
+    '<tr><td>SYN</td><td>nonce = <code>' + esc(synNonce) + '</code></td><td>—</td></tr>' +
+    '<tr><td>SYN-ACK</td><td>sha256(<code>' + esc(synNonce) + '</code>)<br>= <code class="hash">' + esc(expected1) + '</code><br>' +
+      (check1 ? 'matches' : 'expected') + ' hash in value</td><td>' + tag(check1) + '</td></tr>' +
+    '<tr><td>ACK</td><td>sha256(<code>' + esc(synAckNonce) + '</code>)<br>= <code class="hash">' + esc(expected2) + '</code><br>' +
+      (check2 ? 'matches' : 'expected') + ' hash in value</td><td>' + tag(check2) + '</td></tr>' +
+    '</table><br>' +
+    '<strong>Overall: ' + tag(overall) + '</strong> — The SHA-256 chain is ' +
+    (overall ? 'cryptographically valid.' : '<span class="verify-fail">BROKEN</span>.') +
+    '<br><small>Download <code>log.csv</code> and run <code>node verify-handshake.mjs log.csv</code> to verify independently.</small>';
+}
+
+// ---------------------------------------------------------------------------
 // CSV Export
 // ---------------------------------------------------------------------------
 function downloadCSV() {
@@ -634,4 +685,5 @@ window.sendSyn = sendSyn;
 window.beginFacets = beginFacets;
 window.initTeardown = initTeardown;
 window.downloadCSV = downloadCSV;
+window.verifyHandshake = verifyHandshake;
 window.toggleConcept = toggleConcept;
