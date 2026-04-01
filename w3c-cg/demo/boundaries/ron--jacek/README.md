@@ -1,11 +1,11 @@
 # Boundary: ron ↔ jacek
 
-## Status: ESTABLISHED
+## Status: EVALUATING
 
 | Facet | Result | Detail |
 |-------|--------|--------|
 
 ## Protocol trace
 
-3 claims recorded. See [log.csv](log.csv) for the full trace.
+4 claims recorded. See [log.csv](log.csv) for the full trace.
 
