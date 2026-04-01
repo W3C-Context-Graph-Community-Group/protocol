@@ -6,4 +6,8 @@ Boundary: ron ↔ jacek
 
 Both sides surfaced domain, units, measurement type. Domains differ (HVAC vs clinical).
 
-## Current phase: MEANING
+## Meaning (μ_M = 1)
+
+ron: indoor air temperature. jacek: patient body temperature. **Mismatch.**
+
+## Current phase: STRUCTURE
