@@ -10,5 +10,5 @@
 
 ## Protocol trace
 
-13 claims recorded. See [log.csv](log.csv) for the full trace.
+14 claims recorded. See [log.csv](log.csv) for the full trace.
 
