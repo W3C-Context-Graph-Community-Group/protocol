@@ -10,4 +10,8 @@ Both sides surfaced domain, units, measurement type. Domains differ (HVAC vs cli
 
 ron: indoor air temperature. jacek: patient body temperature. **Mismatch.**
 
-## Current phase: STRUCTURE
+## Structure (μ_S = 1)
+
+ron: Celsius, range 15–45. jacek: Fahrenheit, range 90–110. **Mismatch.**
+
+## Current phase: DATA
