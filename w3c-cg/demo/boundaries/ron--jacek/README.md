@@ -7,5 +7,5 @@
 
 ## Protocol trace
 
-1 claims recorded. See [log.csv](log.csv) for the full trace.
+2 claims recorded. See [log.csv](log.csv) for the full trace.
 
