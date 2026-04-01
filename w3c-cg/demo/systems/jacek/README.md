@@ -18,6 +18,7 @@ Clinical / inpatient electronic health records for City Hospital.
 - [Meaning](meaning/temperature.md) — What the value refers to
 - [Structure](structure/temperature.md) — How the value is encoded
 - [Context](context/temperature.md) — Domain, location, measurement method
+- [Concept](concepts/temperature.md) — Live concept page (null state)
 
 ## Boundaries
 

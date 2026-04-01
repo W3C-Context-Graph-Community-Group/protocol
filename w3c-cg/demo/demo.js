@@ -48,6 +48,95 @@ const state = {
 };
 
 // ---------------------------------------------------------------------------
+// Concept state — per-system live concept pages
+// ---------------------------------------------------------------------------
+const U = '_unmeasured_';
+
+function makeConceptState(systemLabel, systemName) {
+  return {
+    system: systemLabel,
+    name: systemName,
+    status: 'null \u2014 no protocol session',
+    facetsMeasured: 0,
+    data: { timestamp: U, value: U },
+    structure: { unit: U, precision: U, validRange: U, format: U },
+    meaning: U,
+    context: U,
+    rotationLog: [],
+  };
+}
+
+const conceptState = {
+  ron:   makeConceptState('Ron \u2014 HVAC', 'ron'),
+  jacek: makeConceptState('Jacek \u2014 Clinical', 'jacek'),
+};
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function cell(v) {
+  return v === U ? '<span class="unmeasured">' + esc(U) + '</span>' : esc(String(v));
+}
+
+function buildConceptHTML(cs) {
+  const rows = cs.rotationLog.length > 0
+    ? cs.rotationLog.map(e => esc(e)).join('\n')
+    : '<em>No rotations performed.</em>';
+
+  const meaningHTML = cs.meaning === U
+    ? '<em>No definition asserted. This facet is in null state.</em>'
+    : esc(cs.meaning);
+
+  const contextHTML = cs.context === U
+    ? '<em>No context surfaced. This facet is in null state.</em>'
+    : esc(cs.context);
+
+  return '<div class="status-line">Status: ' + esc(cs.status) + '</div>' +
+    '<h4>Data</h4>' +
+    '<table><tr><th>timestamp</th><th>value</th></tr>' +
+    '<tr><td>' + cell(cs.data.timestamp) + '</td><td>' + cell(cs.data.value) + '</td></tr></table>' +
+    '<h4>Structure</h4>' +
+    '<table><tr><th>property</th><th>value</th></tr>' +
+    '<tr><td>unit</td><td>' + cell(cs.structure.unit) + '</td></tr>' +
+    '<tr><td>precision</td><td>' + cell(cs.structure.precision) + '</td></tr>' +
+    '<tr><td>valid range</td><td>' + cell(cs.structure.validRange) + '</td></tr>' +
+    '<tr><td>format</td><td>' + cell(cs.structure.format) + '</td></tr></table>' +
+    '<h4>Meaning</h4><p>' + meaningHTML + '</p>' +
+    '<h4>Context</h4><p>' + contextHTML + '</p>' +
+    '<h4>Rotation Log</h4><div class="rotation-log">' + rows + '</div>';
+}
+
+function renderConceptPanel(name) {
+  const el = document.getElementById('concept-' + name);
+  if (el) el.innerHTML = buildConceptHTML(conceptState[name]);
+}
+
+function updateConcept(name, facet, updates) {
+  const cs = conceptState[name];
+  if (updates.status) cs.status = updates.status;
+  if (updates.data) Object.assign(cs.data, updates.data);
+  if (updates.structure) Object.assign(cs.structure, updates.structure);
+  if (updates.meaning !== undefined) cs.meaning = updates.meaning;
+  if (updates.context !== undefined) cs.context = updates.context;
+  if (updates.logEntry) cs.rotationLog.push(updates.logEntry);
+  if (updates.facetsMeasured !== undefined) cs.facetsMeasured = updates.facetsMeasured;
+  if (updates.facetsMeasured !== undefined && updates.facetsMeasured > 0 && updates.facetsMeasured < 4) {
+    cs.status = 'evaluating \u2014 ' + cs.facetsMeasured + ' of 4 facets measured';
+  }
+  renderConceptPanel(name);
+}
+
+function toggleConcept(name) {
+  const el = document.getElementById('concept-' + name);
+  if (!el) return;
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) renderConceptPanel(name);
+}
+
+// ---------------------------------------------------------------------------
 // DOM refs
 // ---------------------------------------------------------------------------
 const $banner   = document.getElementById('status-banner');
@@ -330,6 +419,10 @@ async function sendSyn() {
   renderInterpTable();
   updateUncertainty('8', '3.00', 'HALT — context not surfaced');
 
+  // Update concept pages — initialized
+  updateConcept('ron', 'init', { status: 'initialized', data: { value: '30' } });
+  updateConcept('jacek', 'init', { status: 'initialized', data: { value: '30' } });
+
   $btnFacets.disabled = false;
 }
 
@@ -349,6 +442,7 @@ async function beginFacets() {
     key: keyURI('facet/context'),
     value: 'ask:domain,unit-system,measurement-type',
   });
+  updateConcept('ron', 'context', { logEntry: '[context] ask \u2192 domain, unit-system, measurement-type' });
   await sleep(300);
 
   addLogRow({
@@ -356,6 +450,7 @@ async function beginFacets() {
     key: keyURI('facet/context'),
     value: 'domain:clinical,units:imperial,type:body-oral',
   });
+  updateConcept('jacek', 'context', { context: 'domain: clinical, units: imperial, type: body-oral' });
   await sleep(300);
 
   addLogRow({
@@ -366,6 +461,8 @@ async function beginFacets() {
   state.mu.c = 1;
   eliminateInterpretations('context');
   updateUncertainty('4', '2.00', 'continue — domains differ');
+  updateConcept('ron', 'context', { context: 'domain: HVAC, units: metric, type: indoor-air', facetsMeasured: 1, logEntry: '[context] verdict \u2192 sufficient, domains differ' });
+  updateConcept('jacek', 'context', { facetsMeasured: 1, logEntry: '[context] verdict \u2192 sufficient, domains differ' });
   await sleep(300);
 
   // ---- MEANING (rows 7-9) ----
@@ -375,6 +472,7 @@ async function beginFacets() {
     key: keyURI('facet/meaning'),
     value: 'ask:definition-of-temperature',
   });
+  updateConcept('ron', 'meaning', { logEntry: '[meaning] ask \u2192 definition-of-temperature' });
   await sleep(300);
 
   addLogRow({
@@ -382,6 +480,7 @@ async function beginFacets() {
     key: keyURI('facet/meaning'),
     value: 'def:patient-body-temperature-oral-reading',
   });
+  updateConcept('jacek', 'meaning', { meaning: 'Patient body temperature (oral reading)' });
   await sleep(300);
 
   addLogRow({
@@ -392,6 +491,8 @@ async function beginFacets() {
   state.mu.m = 1;
   eliminateInterpretations('meaning');
   updateUncertainty('2', '1.00', 'mismatch detected');
+  updateConcept('ron', 'meaning', { meaning: 'Indoor air temperature (ceiling-mounted sensor)', facetsMeasured: 2, logEntry: '[meaning] verdict \u2192 mismatch, ron=indoor-air, jacek=body-oral' });
+  updateConcept('jacek', 'meaning', { facetsMeasured: 2, logEntry: '[meaning] verdict \u2192 mismatch, ron=indoor-air, jacek=body-oral' });
   await sleep(300);
 
   // ---- STRUCTURE (rows 10-12) ----
@@ -401,6 +502,7 @@ async function beginFacets() {
     key: keyURI('facet/structure'),
     value: 'ask:unit,precision,valid-range',
   });
+  updateConcept('ron', 'structure', { logEntry: '[structure] ask \u2192 unit, precision, valid-range' });
   await sleep(300);
 
   addLogRow({
@@ -408,6 +510,7 @@ async function beginFacets() {
     key: keyURI('facet/structure'),
     value: 'unit:fahrenheit,precision:1,range:90-110',
   });
+  updateConcept('jacek', 'structure', { structure: { unit: 'Fahrenheit (\u00b0F)', precision: '1', validRange: '90 \u2013 110' } });
   await sleep(300);
 
   addLogRow({
@@ -418,15 +521,19 @@ async function beginFacets() {
   state.mu.s = 1;
   eliminateInterpretations('structure');
   updateUncertainty('1', '0.00', 'resolved but incoherent');
+  updateConcept('ron', 'structure', { structure: { unit: 'Celsius (\u00b0C)', precision: '0.1', validRange: '15 \u2013 45' }, facetsMeasured: 3, logEntry: '[structure] verdict \u2192 mismatch, ron=celsius, jacek=fahrenheit' });
+  updateConcept('jacek', 'structure', { facetsMeasured: 3, logEntry: '[structure] verdict \u2192 mismatch, ron=celsius, jacek=fahrenheit' });
   await sleep(300);
 
   // ---- DATA (rows 13-15) ----
   state.facetPhase = 'DATA';
+  const dataTs = now();
   addLogRow({
-    id: fid, source: RON_URI, timestamp: now(),
+    id: fid, source: RON_URI, timestamp: dataTs,
     key: keyURI('facet/data'),
     value: 'ask:current-value',
   });
+  updateConcept('ron', 'data', { logEntry: '[data] ask \u2192 current-value' });
   await sleep(300);
 
   addLogRow({
@@ -434,6 +541,8 @@ async function beginFacets() {
     key: keyURI('facet/data'),
     value: 'val:30',
   });
+  updateConcept('ron', 'data', { data: { timestamp: dataTs, value: '30' } });
+  updateConcept('jacek', 'data', { data: { timestamp: dataTs, value: '30' } });
   await sleep(300);
 
   addLogRow({
@@ -443,6 +552,8 @@ async function beginFacets() {
   });
   state.mu.d = undefined;
   state.facetPhase = 'COMPLETE';
+  updateConcept('ron', 'data', { facetsMeasured: 4, logEntry: '[data] verdict \u2192 halt, meaning and structure misaligned' });
+  updateConcept('jacek', 'data', { facetsMeasured: 4, logEntry: '[data] verdict \u2192 halt, meaning and structure misaligned' });
 
   $btnTeardown.disabled = false;
 }
@@ -475,6 +586,10 @@ async function initTeardown() {
 
   setStatus('CLOSED', 'CLOSED (INCOHERENT)');
   updateUncertainty('resolved', '0.00', 'HALT — upstream misaligned');
+
+  // Update concept pages — incoherent
+  updateConcept('ron', 'teardown', { status: 'incoherent', logEntry: '[teardown] FIN \u2192 incoherent' });
+  updateConcept('jacek', 'teardown', { status: 'incoherent', logEntry: '[teardown] FIN-ACK \u2192 incoherent' });
 
   // Show final verdict
   $verdictBox.style.display = 'block';
@@ -519,3 +634,4 @@ window.sendSyn = sendSyn;
 window.beginFacets = beginFacets;
 window.initTeardown = initTeardown;
 window.downloadCSV = downloadCSV;
+window.toggleConcept = toggleConcept;

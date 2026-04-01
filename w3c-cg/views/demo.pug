@@ -26,13 +26,13 @@ html
       }
       header h1 { font-size: 0.95rem; font-weight: 600; white-space: nowrap; }
       header .about-link {
-        color: #79b8ff;
+        color: #0366d6;
         font-size: 0.85rem;
         cursor: pointer;
         white-space: nowrap;
         margin-left: 1rem;
       }
-      header .about-link:hover { text-decoration: underline; color: #fff; }
+      header .about-link:hover { text-decoration: underline; color: #24292e; }
 
       #about-modal {
         display: none;
@@ -256,6 +256,36 @@ html
       }
       #verdict-box strong { color: #d73a49; }
 
+      .concept-toggle {
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        color: #0366d6;
+      }
+      .concept-toggle:hover { text-decoration: underline; }
+      .concept-panel {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+      .concept-panel.open { display: block; }
+      .concept-panel h4 { font-size: 0.82rem; margin: 0.6rem 0 0.3rem; }
+      .concept-panel h4:first-child { margin-top: 0; }
+      .concept-panel table { width: 100%; border-collapse: collapse; margin: 0.3rem 0; }
+      .concept-panel th, .concept-panel td { padding: 0.2rem 0.4rem; border: 1px solid #e1e4e8; text-align: left; font-size: 0.75rem; }
+      .concept-panel th { background: #fff; font-weight: 600; }
+      .unmeasured { color: #959da5; font-style: italic; }
+      .status-line { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.78rem; }
+      .concept-panel .rotation-log { white-space: pre-line; font-family: monospace; font-size: 0.72rem; color: #444; }
+
       @media (max-width: 960px) {
         #demo-layout {
           grid-template-columns: 1fr;
@@ -316,6 +346,9 @@ html
           a(href="/demo/systems/ron/context/temperature") Context spec
           a(href="/demo/systems/ron/meaning/temperature") Meaning spec
           a(href="/demo/systems/ron/structure/temperature") Structure spec
+          a(href="/demo/systems/ron/concepts/temperature") Concept page
+        a.concept-toggle(onclick="toggleConcept('ron')") View concept: temperature
+        #concept-ron.concept-panel
 
       section#protocol-center
         #status-banner.state-null NULL — No protocol session
@@ -383,5 +416,8 @@ html
           a(href="/demo/systems/jacek/context/temperature") Context spec
           a(href="/demo/systems/jacek/meaning/temperature") Meaning spec
           a(href="/demo/systems/jacek/structure/temperature") Structure spec
+          a(href="/demo/systems/jacek/concepts/temperature") Concept page
+        a.concept-toggle(onclick="toggleConcept('jacek')") View concept: temperature
+        #concept-jacek.concept-panel
 
     script(src="/demo/demo.js")

@@ -18,6 +18,7 @@ HVAC / building management system for Building 7.
 - [Meaning](meaning/temperature.md) — What the value refers to
 - [Structure](structure/temperature.md) — How the value is encoded
 - [Context](context/temperature.md) — Domain, location, calibration
+- [Concept](concepts/temperature.md) — Live concept page (null state)
 
 ## Boundaries
 
