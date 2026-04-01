@@ -1,6 +1,6 @@
 # Boundary: ron ↔ jacek
 
-## Status: CLOSING
+## Status: INCOHERENT
 
 | Facet | Result | Detail |
 |-------|--------|--------|
@@ -11,5 +11,18 @@
 
 ## Protocol trace
 
-16 claims recorded. See [log.csv](log.csv) for the full trace.
+17 claims recorded. See [log.csv](log.csv) for the full trace.
 
+## What happened
+
+Both systems have a field called `temperature` with the value `30`. The column name matches. The value matches. Shannon reports perfect transmission.
+
+The protocol surfaced three misalignments invisible to every standard instrument:
+
+1. **Meaning mismatch:** ron measures room air temperature. jacek measures patient body temperature.
+2. **Structure mismatch:** ron encodes in Celsius. jacek encodes in Fahrenheit.
+3. **Data incoherence:** The value `30` means completely different things under different codebooks.
+
+## Protocol action: HALT
+
+The boundary is incoherent. Any computation that merges these two `temperature` values will produce a confidently wrong result.
