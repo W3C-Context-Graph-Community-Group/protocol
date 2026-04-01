@@ -2,4 +2,10 @@
 
 ## Status: PENDING
 
-Session started. Protocol running...
+| Facet | Result | Detail |
+|-------|--------|--------|
+
+## Protocol trace
+
+1 claims recorded. See [log.csv](log.csv) for the full trace.
+
