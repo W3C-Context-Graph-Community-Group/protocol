@@ -2,12 +2,66 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { marked } = require('marked');
+const GitHubSyncManager = require('./github/sync-manager/GitHubSyncManager');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
+app.use(express.json());
+
+// Sync manager — one instance shared across all API calls
+const syncManager = new GitHubSyncManager({
+  repoOwner: 'W3C-Context-Graph-Community-Group',
+  repoName: 'protocol',
+  baseBranch: 'main',
+});
+
+// ---------------------------------------------------------------------------
+// Sync API
+// ---------------------------------------------------------------------------
+app.get('/api/sync/status', async (req, res) => {
+  const access = await syncManager.verifyAccess();
+  res.json({
+    available: access.ok,
+    method: access.method,
+    reason: access.ok ? null : access.error,
+  });
+});
+
+app.post('/api/sync/init', async (req, res) => {
+  try {
+    const { systemA, systemB } = req.body;
+    const result = await syncManager.initSession(systemA, systemB);
+    res.json({ ok: true, branchName: result.branchName, branchUrl: result.branchUrl });
+  } catch (err) {
+    console.error('[sync] init error:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/sync/claim', async (req, res) => {
+  try {
+    const { claim, state } = req.body;
+    const result = await syncManager.syncClaim(claim, state);
+    res.json(result);
+  } catch (err) {
+    console.error('[sync] claim error:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/sync/finalize', async (req, res) => {
+  try {
+    const { state } = req.body;
+    const result = await syncManager.finalizeSession(state);
+    res.json(result);
+  } catch (err) {
+    console.error('[sync] finalize error:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // Interactive protocol demo (must precede static middleware to avoid demo/ directory redirect)
 app.get('/demo', (req, res) => {

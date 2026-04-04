@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>protocol/syn — Context Graph Protocol</title>
+<style>
+:root{--bg:#fff;--t:#1a1a2e;--td:rgba(0,0,0,0.45);--border:rgba(0,0,0,0.1);--accent:#0891b2;--pur:#7c3aed;--panel:rgba(0,0,0,0.025)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'JetBrains Mono',monospace;max-width:700px;margin:0 auto;padding:40px 20px;line-height:1.7}
+h1{font-size:1.6em;margin-bottom:4px}
+.sub{color:var(--td);font-size:.8em;margin-bottom:24px}
+h2{font-size:1.1em;margin:24px 0 8px;color:var(--pur)}
+p,li{font-size:.85em}
+code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:3px;font-size:.85em}
+pre{background:rgba(0,0,0,.04);padding:12px;border-radius:4px;overflow-x:auto;font-size:.8em;margin:12px 0}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.state{display:inline-block;padding:3px 10px;border-radius:4px;font-weight:700;font-size:.85em;background:rgba(124,58,237,0.1);color:var(--pur)}
+.spec{margin:16px 0;padding:12px;background:var(--panel);border:1px solid var(--border);border-radius:4px;font-size:.85em}
+.spec div{margin:4px 0}
+.nav{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);font-size:.75em;color:var(--td)}
+</style>
+</head>
+<body>
+<h1>protocol/syn</h1>
+<p class="sub">Handshake initiation</p>
+
+<p><span class="state">NULL &#8594; SYN-SENT</span></p>
+
+<div class="spec">
+<div><strong>Key:</strong> <code>https://w3c-cg.github.io/context-graph/protocol/syn</code></div>
+<div><strong>Value:</strong> A cryptographic nonce (random hex string)</div>
+<div><strong>Id:</strong> A boundary URI minted by the initiator</div>
+</div>
+
+<h2>Semantics</h2>
+<p>The SYN claim says: "I want to establish a measured boundary with you. Here is a nonce proving this message is fresh."</p>
+
+<h2>Timeout</h2>
+<p>If no <a href="../syn-ack/">syn-ack</a> is received within the configured timeout, the initiator retransmits with exponential backoff. After all retries fail, a <a href="../halt/">timeout</a> claim is recorded.</p>
+
+<h2>Example</h2>
+<pre>id,source,timestamp,key,value
+urn:boundary:ron-jacek,.../systems/ron,2026-04-01T21:17:46.321Z,.../protocol/syn,b4e403c7</pre>
+
+<div class="nav">
+<a href="../">&#8592; protocol</a> &middot; <a href="../../">protocol root</a><br>
+Lifecycle: <strong>syn</strong> &middot; <a href="../syn-ack/">syn-ack</a> &middot; <a href="../ack/">ack</a> &middot; <a href="../fin/">fin</a> &middot; <a href="../fin-ack/">fin-ack</a> &middot; <a href="../halt/">halt</a>
+</div>
+</body>
+</html>

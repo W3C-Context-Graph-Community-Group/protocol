@@ -26,14 +26,36 @@ html
         justify-content: space-between;
       }
       header h1 { font-size: 0.95rem; font-weight: 600; white-space: nowrap; }
+      header .header-right { display: flex; align-items: center; gap: 1rem; }
       header .about-link {
         color: #0366d6;
         font-size: 0.85rem;
         cursor: pointer;
         white-space: nowrap;
-        margin-left: 1rem;
       }
       header .about-link:hover { text-decoration: underline; color: #24292e; }
+
+      #sync-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: #586069;
+        white-space: nowrap;
+      }
+      #sync-status .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #959da5;
+        flex-shrink: 0;
+      }
+      #sync-status.checking .dot { background: #dbab09; }
+      #sync-status.connected .dot { background: #28a745; }
+      #sync-status.disconnected .dot { background: #d73a49; }
+      #sync-status.checking { color: #b08800; }
+      #sync-status.connected { color: #28a745; }
+      #sync-status.disconnected { color: #d73a49; }
 
       #about-modal {
         display: none;
@@ -333,7 +355,11 @@ html
   body
     header
       h1 W3C Context Graph Community Group — Canonical Test
-      a.about-link(onclick="document.getElementById('about-modal').classList.add('open')") About
+      .header-right
+        #sync-status.checking
+          span.dot
+          span.label Checking GitHub…
+        a.about-link(onclick="document.getElementById('about-modal').classList.add('open')") About
 
     #about-modal(onclick="if(event.target===this)this.classList.remove('open')")
       .modal-content

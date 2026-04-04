@@ -33,6 +33,91 @@ const BOUNDARY_ID =
 const FACET_ID = BOUNDARY_ID + '/temperature';
 
 // ---------------------------------------------------------------------------
+// GitHub Sync — pushes every claim to GitHub Pages in real time
+// ---------------------------------------------------------------------------
+const sync = {
+  available: false,
+  initialized: false,
+  branchUrl: null,
+
+  async check() {
+    const el = document.getElementById('sync-status');
+    const label = el && el.querySelector('.label');
+    try {
+      const res = await fetch('/api/sync/status');
+      const data = await res.json();
+      this.available = data.available;
+      if (this.available) {
+        console.log('[sync] GitHub sync available via', data.method);
+        if (el) { el.className = 'connected'; }
+        if (label) { label.textContent = 'GitHub: connected (' + data.method + ')'; }
+      } else {
+        console.log('[sync] GitHub sync unavailable:', data.reason);
+        if (el) { el.className = 'disconnected'; }
+        if (label) { label.textContent = 'GitHub: ' + (data.reason || 'unavailable'); }
+      }
+    } catch (_) {
+      this.available = false;
+      if (el) { el.className = 'disconnected'; }
+      if (label) { label.textContent = 'GitHub: offline'; }
+    }
+  },
+
+  async init(systemA, systemB) {
+    if (!this.available) return;
+    const label = document.querySelector('#sync-status .label');
+    try {
+      const res = await fetch('/api/sync/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemA, systemB }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        this.initialized = true;
+        this.branchUrl = data.branchUrl;
+        console.log('[sync] Session created:', data.branchName);
+        if (label) { label.textContent = 'Syncing: ' + data.branchName; }
+      }
+    } catch (err) {
+      console.warn('[sync] init failed:', err.message);
+      if (label) { label.textContent = 'GitHub: init failed'; }
+    }
+  },
+
+  async pushClaim(claim, clientState) {
+    if (!this.available || !this.initialized) return;
+    try {
+      await fetch('/api/sync/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim, state: clientState }),
+      });
+    } catch (err) {
+      console.warn('[sync] claim push failed:', err.message);
+    }
+  },
+
+  async finalize(clientState) {
+    if (!this.available || !this.initialized) return;
+    try {
+      const res = await fetch('/api/sync/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: clientState }),
+      });
+      const data = await res.json();
+      if (data.prUrl) console.log('[sync] PR created:', data.prUrl);
+    } catch (err) {
+      console.warn('[sync] finalize failed:', err.message);
+    }
+  },
+};
+
+// Check sync availability on load
+sync.check();
+
+// ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 const state = {
@@ -217,6 +302,15 @@ function addLogRow(claim) {
   state.rowNum++;
   state.log.push(claim);
 
+  // Push claim to GitHub in background (non-blocking)
+  sync.pushClaim(claim, {
+    rowNum: state.rowNum,
+    protocolState: state.protocolState,
+    facetPhase: state.facetPhase,
+    mu: { ...state.mu },
+    log: state.log,
+  });
+
   const tr = document.createElement('tr');
   const srcShort = shortSource(claim.source);
   tr.className = 'new-row source-' + srcShort;
@@ -376,6 +470,9 @@ async function sendSyn() {
 
   state.boundaryId = BOUNDARY_ID;
   state.facetId = FACET_ID;
+
+  // Initialize GitHub sync session (creates branch + folder)
+  await sync.init('ron', 'jacek');
 
   // --- SYN ---
   state.initiatorNonce = generateNonce();
@@ -588,6 +685,14 @@ async function initTeardown() {
 
   setStatus('CLOSED', 'CLOSED (INCOHERENT)');
   updateUncertainty('resolved', '0.00', 'HALT — upstream misaligned');
+
+  // Finalize GitHub sync (creates PR)
+  sync.finalize({
+    protocolState: state.protocolState,
+    facetPhase: state.facetPhase,
+    mu: { ...state.mu },
+    log: state.log,
+  });
 
   // Update concept pages — incoherent
   updateConcept('ron', 'teardown', { status: 'incoherent', logEntry: '[teardown] FIN \u2192 incoherent' });

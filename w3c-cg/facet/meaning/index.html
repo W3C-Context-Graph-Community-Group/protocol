@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>facet/meaning — Context Graph Protocol</title>
+<style>
+:root{--bg:#fff;--t:#1a1a2e;--td:rgba(0,0,0,0.45);--border:rgba(0,0,0,0.1);--accent:#0891b2;--green:#059669;--red:#dc2626;--yellow:#d97706;--panel:rgba(0,0,0,0.025)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'JetBrains Mono',monospace;max-width:700px;margin:0 auto;padding:40px 20px;line-height:1.7}
+h1{font-size:1.6em;margin-bottom:4px}
+.sub{color:var(--td);font-size:.8em;margin-bottom:24px}
+h2{font-size:1.1em;margin:24px 0 8px;color:var(--accent)}
+p,li{font-size:.85em}
+code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:3px;font-size:.85em}
+ol{margin:8px 0 8px 24px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.spec{margin:16px 0;padding:12px;background:var(--panel);border:1px solid var(--border);border-radius:4px;font-size:.85em}
+.spec div{margin:4px 0}
+.nav{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);font-size:.75em;color:var(--td)}
+</style>
+</head>
+<body>
+<h1>facet/meaning</h1>
+<p class="sub">Meaning comparison — what the value refers to</p>
+
+<div class="spec">
+<div><strong>Key:</strong> <code>https://w3c-cg.github.io/context-graph/facet/meaning</code></div>
+<div><strong>Dependency:</strong> Valid only when &#956;<sub>C</sub> = 1</div>
+<div><strong>Indicator:</strong> &#956;<sub>M</sub> &#8712; {0, 1} — 0 = match, 1 = mismatch</div>
+</div>
+
+<h2>Three-step rotation</h2>
+<ol>
+<li><strong>Ask:</strong> <code>ask:definition-of-{field}</code></li>
+<li><strong>Response:</strong> The other system's definition</li>
+<li><strong>Verdict:</strong> <code>verdict:match,mu_m:0</code> or <code>verdict:mismatch,mu_m:1</code></li>
+</ol>
+
+<p>Comparison is by string equality. A mismatch triggers <strong>Ask</strong>, not Halt.</p>
+
+<div class="nav">
+<a href="../">&#8592; facet</a> &middot; <a href="../../">protocol root</a><br>
+Facets: <a href="../context/">context</a> &middot; <strong>meaning</strong> &middot; <a href="../structure/">structure</a> &middot; <a href="../data/">data</a>
+</div>
+</body>
+</html>
