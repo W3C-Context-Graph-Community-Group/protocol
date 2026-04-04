@@ -9,15 +9,22 @@ Two systems exchange data. This protocol determines whether they mean the same t
 
 ---
 
-## The Problem
+## The Problem: Uncertainty at System Boundary Communication
 
-Every algorithm that takes a data matrix as input assumes all rows share a common codebook — that column j means the same thing in row i as in row i′. This assumption is never checked. When it fails at a system boundary, the algorithm executes, the loss function reports a number, and the output is confidently wrong.
-
-The information needed to verify the assumption is on the other side of the boundary. No computation within a single system can produce it.
+A system is anything with its own codebook — its own way of interpreting data. A person, an API, a database, a spreadsheet.
+ 
+When two systems exchange data, both assume they mean the same thing. That assumption is never checked. When it's wrong, everything downstream is confidently wrong — and nothing in either system can detect it.
+ 
+The information needed to verify the assumption is on the other side of the boundary.
 
 ## The Fix
 
 Put an instrument at the boundary. Let it ask.
+
+![The Observatron](observatron.png)
+
+The **observatron** sits on the boundary of a system. It rotates inward to check the codebook, decides (Act, Ask, or Halt), then rotates outward to communicate across the boundary. Every rotation produces a recorded claim.
+ 
 
 ---
 
