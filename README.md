@@ -21,7 +21,7 @@ The information needed to verify the assumption is on the other side of the boun
 
 Put an instrument at the boundary. Let it ask.
 
-![The Observatron](observatron.png)
+![The Observatron](figures/observatron.png)
 
 The **observatron** sits on the boundary of a system. It rotates inward to check the codebook, decides (Act, Ask, or Halt), then rotates outward to communicate across the boundary. Every rotation produces a recorded claim.
  
