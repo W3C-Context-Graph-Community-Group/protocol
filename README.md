@@ -1,6 +1,9 @@
 # Context Graph Protocol
 
 Two systems exchange data. This protocol determines whether they mean the same thing.
+The purpose of this protocol is the smallest possible variables and complexity that supports the maximum generalizability across context.
+
+For more info, see the paper on Liquid Mesh Folding
 
 **Base URI:** `https://w3c-context-graph-community-group.github.io/protocol/`  
 **Prefix:** `cg:` (Context Graph)  
@@ -35,7 +38,7 @@ The **observatron** sits on the boundary of a system. It rotates inward to check
 The observatron is the protocol's measurement instrument. Your system creates one and grants it access to your codebook.
 
 ```
-source = cg:protocol/observatron/your-system-name
+source = cg:protocol/observatron/source/<system_1:id>
 ```
 
 If you don't provide a name, one is auto-generated.
@@ -45,12 +48,14 @@ If you don't provide a name, one is auto-generated.
 Point the observatron at the system you're exchanging data with. This assigns a boundary id.
 
 ```
-id = cg:protocol/boundary/your-system--their-system
+id = cg:protocol/boundary/<system_1>-<other system(s):id>
 ```
 
-The observatron now has two channels: inward (your codebook) and outward (their signals).
+The observatron now has two channels: inward (system_1 codebook) and outward (other system(s) signals).
 
 ### 3. Handshake
+
+Unilateral is the only requirement, if there is no handshake, then there are no other systems available for it to interact with. The parent system needs to provide an id & source or one is auto-generated.
 
 **Bilateral** — both sides run the protocol. Cryptographic nonce exchange proves receipt.
 
@@ -66,11 +71,18 @@ ACK       →  value: sha256(c4d5e6f7)
 
 Each facet is compared in dependency order. If an upstream facet fails, downstream evaluation stops.
 
+**Assertions of the four facet model**
+
+The decision tree:
+
 ```
-context   →  Are we in the same reference frame?     (if no → Halt)
-meaning   →  Do we mean the same thing?              (if no → Ask)
-structure →  Is it encoded the same way?              (if no → Ask)
-data      →  Does the value match?                    (if no → Ask, if yes → Act)
+context   →  Are we in the same reference frame?      if FALSE → Halt
+meaning   →  Do we mean the same thing?               if FALSE → Ask
+structure →  Is it encoded the same way?              if FALSE → Ask
+data      →  Does the value match?                    if FALSE → Ask
+                                                      ELSE ACT
+
+
 ```
 
 **Halt** = can't reason here. **Ask** = need more information. **Act** = codebooks aligned, proceed.
