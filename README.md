@@ -112,13 +112,16 @@ The full trace — SYN to FIN-ACK — is your audit trail.
 
 Every boundary facet you haven't measured is in one of these states:
 
-| State | What it means | What it looks like from inside |
-|---|---|---|
-| **Null** | No slot exists. You don't know you don't know. | Confidence. No alarm. |
-| **Undefined** | Slot exists, no value. You know you have a gap. | Known gap. |
-| **Verified** | Measured. Match, mismatch, or conditional. | Confidence. No alarm. |
+State                    What it means                                                    What it looks like from inside
+Null Uncertainty         No facets are registered. No axes exist for measurement.          Confidence. No alarm.
+                         The configuration space is undefined — not large, but absent.
+Dark Uncertainty         Facets are registered and axes exist, but positions have           Known gap.
+                         not been verified. The system is somewhere in the
+                         configuration space but does not know where.
+Collapsed Uncertainty    All facets have been verified. The system occupies a single        Confidence. No alarm.
+                         known point in the configuration space.
 
-Null and verified are indistinguishable from inside. That's the problem this protocol solves.
+Null uncertainty and collapsed uncertainty are indistinguishable from inside. That's the problem this protocol solves.
 
 ---
 
