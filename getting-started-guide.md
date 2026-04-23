@@ -198,7 +198,7 @@ The Dark Fraction Calculator is the canonical reference implementation of this f
 
 Observatrons can mechanize a specific task: *populate this facet given these inputs*. That's an engineering problem with a definition of done — not a vague "reduce uncertainty" goal. An **observatron** is the unit that performs this work: an autonomous state machine stationed at a boundary, watching what crosses, and resolving facets either deterministically or by asking a human.
 
-![Two observatrons across a boundary. Each is a spiky ball — the node surface with tetrahedral spikes sticking out. Each spike has its Data face pressed against the surface (anchoring it) and its Meaning, Structure, and Context faces elevated. Color encodes dark uncertainty: redder means higher δ, more verified means more glowing surface. The cable between them is an emission crossing a boundary. Observatron-1 is 80.2% dark across 20 columns; Observatron-2 is 58.9% dark across 17 columns.](figures/observatrons.png)
+![Two observatrons across a boundary. Each is a spiky ball — the node surface with tetrahedral spikes sticking out. Each spike has its Data face pressed against the surface (anchoring it) and its Meaning, Structure, and Context faces elevated. Color encodes dark uncertainty: redder means higher δ, more verified means more glowing surface. The cable between them is an emission crossing a boundary. Observatron-1 is 80.2% dark across 20 columns; Observatron-2 is 58.9% dark across 17 columns.](figures/two-observatrons.png)
 
 In our **Getting Started** example, we will focus on Observatrons across the entire stack — minimal, but end-to-end:
 
@@ -415,3 +415,345 @@ All five are addressable, all five compose into claims, all five can be compared
 The compression isn't a performance optimization. It's the mechanism by which **two independent systems can compare what they saw without sharing any prior schema**. Each system produces URLs that carry their own context. A reader of either system's graph can walk URLs alone to reconstruct most of the picture, dereference `/context` for time, dereference `/data` for values, and compare projections. No lookup table, no translation layer, no schema negotiation.
 
 That's the payoff. Three compressions in the structure, and the output is a protocol where comparability is structural rather than agreed-upon.
+
+## In Progress
+
+### 1. Runtime API Contract
+
+```javascript
+// UrlManager — the only class that constructs URL strings
+class UrlManager {
+  constructor() {
+    this.counters = new Map();  // keyed by parent URL → next integer
+  }
+
+  mintSystem(id) {
+    return `cgp:/s/${id}`;
+  }
+
+  mintObservatron(systemUrl, id) {
+    return `${systemUrl}/o/${id}`;
+  }
+
+  // Auto-incremented per (observatron, channel) pair
+  mintEvent(observatronUrl, channelName) {
+    const key = `${observatronUrl}/c/${channelName}`;
+    const n = this.counters.get(key) ?? 0;
+    this.counters.set(key, n + 1);
+    return `${observatronUrl}/c/${channelName}/${n}`;
+  }
+
+  // Auto-incremented per event
+  mintAnchor(eventUrl) {
+    const n = this.counters.get(eventUrl) ?? 0;
+    this.counters.set(eventUrl, n + 1);
+    return `${eventUrl}/a/${n}`;
+  }
+
+  // Auto-incremented per anchor
+  mintPath(anchorUrl) {
+    const n = this.counters.get(anchorUrl) ?? 0;
+    this.counters.set(anchorUrl, n + 1);
+    return `${anchorUrl}/p/${n}`;
+  }
+}
+
+// createObservatron — factory returning an observatron instance
+function createObservatron({ systemId, observatronId, urlManager }) {
+  // Returns an object with:
+  //   systemUrl:       string — cgp:/s/{systemId}
+  //   observatronUrl:  string — cgp:/s/{systemId}/o/{observatronId}
+  //   mintEvent({ channel }) → string (the event URL)
+  //   mintAnchor({ eventUrl, filename, content, bytes, rows }) → string (the anchor URL)
+  //   mintPath({ anchorUrl, header, values, columnIndex }) → string (the path URL)
+  //   appendContext({ url, channel, key, value }) → void
+  //   getState() → deep clone of the flat facet store
+  //   dispatchStateChange() → fires 'cgp-state-change' with { event, state }
+  //
+  // On construction, writes facets for the system and observatron nodes.
+  // System's /context gets one row: channel='system-instantiated'.
+  // Observatron's /context gets one row: channel='observatron-bound'.
+}
+```
+
+Scope: The facet store lives on the observatron instance (returned as part of getState()), not globally. One observatron = one store. Multiple observatrons on a page each have their own.
+Why one UrlManager instance per observatron. Counters are scoped per observatron anyway (event-n is per-channel-per-observatron), so there's no benefit to sharing a UrlManager. Keeping it instance-level means tests can be isolated.
+
+### 2. Event Definition File Structure
+File location: /events/state-change.json (at the repo root, one subdirectory for the reserved events registry).
+File contents:
+
+```json
+{
+  "url": "cgp:/root/events/observatron/state-change",
+  "facets": {
+    "/data": [
+      { "anchor": "cgp:/root/events/observatron/state-change" }
+    ],
+    "/meaning": [
+      {
+        "symbol": "cgp:/root/events/observatron/state-change",
+        "meaning": "Fired by an observatron whenever its state changes. Host bindings dispatch this as the DOM event 'cgp-state-change'. Payload includes the full URL-keyed facet store at the moment of emission."
+      }
+    ],
+    "/structure": [
+      { "constraint-key": "type", "constraint-value": "object" },
+      { "constraint-key": "required", "constraint-value": "[event, state]" },
+      { "constraint-key": "properties.event.type", "constraint-value": "string" },
+      { "constraint-key": "properties.event.const", "constraint-value": "cgp:/root/events/observatron/state-change" },
+      { "constraint-key": "properties.state.type", "constraint-value": "object" },
+      { "constraint-key": "properties.state.description", "constraint-value": "flat URL-keyed map of facet stores" }
+    ],
+    "/context": []
+  }
+}
+```
+
+How the runtime uses it. The runtime imports this file at startup (or loads it via fetch). The event URL becomes a hardcoded reference throughout the runtime. When dispatching cgp-state-change, the runtime reads the event URL from this file and includes it in the event payload:
+
+```javascript
+import eventDef from './events/state-change.json' with { type: 'json' };
+// ...
+const customEvent = new CustomEvent('cgp-state-change', {
+  bubbles: true,
+  detail: {
+    event: eventDef.url,  // the registered URL
+    state: observatron.getState()
+  }
+});
+```
+
+Why JSON, not JS. Keeps the event definition portable — non-JS implementations (Python, Rust) can read the same file. The four-facet shape is preserved verbatim.
+
+### 3. Drop Handler Minting Sequence
+When a user drops files onto the drag-and-drop wrapper, the observatron executes this sequence:
+
+
+```
+1. Mint ONE event under the state-change channel:
+   mintEvent({ channel: 'state-change' })
+   → cgp:/s/0/o/1/c/state-change/{n}
+   
+   Write event's four facets. Append to event's /context:
+   { channel: 'event-fired', key: 'trigger', value: 'drop' }
+
+2. Sort files alphabetically by filename. For each file:
+
+   2a. Read the file as text.
+   
+   2b. Mint ONE anchor under the event:
+       mintAnchor({ eventUrl, filename, content, bytes, rows })
+       → cgp:/s/0/o/1/c/state-change/{n}/a/{m}
+       
+       Anchor's /data = [{ anchor: anchorUrl }]  (self-referential, one-row table)
+       Anchor's /meaning = [{ symbol: anchorUrl, meaning: filename }]
+       Anchor's /structure = [{ constraint-key: 'kind', constraint-value: 'anchor' },
+                              { constraint-key: 'format', constraint-value: 'csv' },
+                              { constraint-key: 'bytes', constraint-value: bytes },
+                              { constraint-key: 'rows', constraint-value: rows }]
+       Anchor's /context = [{ channel: 'anchor-minted', key: 'filename', value: filename }]
+
+   2c. Parse CSV. Split on \n, then on , to get headers and row values.
+
+   2d. For each column in the CSV:
+       mintPath({ anchorUrl, header, values, columnIndex })
+       → cgp:/s/0/o/1/c/state-change/{n}/a/{m}/p/{k}
+       
+       Path's /data = [{ anchor: pathUrl }]  (self-referential)
+       Path's /meaning = [{ symbol: pathUrl, meaning: header }]
+       Path's /structure = [{ constraint-key: 'type', constraint-value: 'string' },
+                            { constraint-key: 'columnIndex', constraint-value: k }]
+       Path's /context = [{ channel: 'path-minted', key: 'header', value: header }]
+
+3. After all minting completes, dispatch cgp-state-change:
+   dispatchStateChange()
+   → fires CustomEvent with event.detail = { event: eventUrl, state: getState() }
+```
+
+*Edge cases with specified behavior:*
+
+- Zero files dropped: No minting. No event dispatched. (Drop target may glow briefly via CSS; that's a UX concern, not a runtime concern.)
+- Zero columns in a CSV: Mint the anchor. Mint no paths. Event still fires.
+- Zero rows in a CSV (only a header row): Mint the anchor and one path per header. Each path's /data row is self-referential (the path URL); the actual column values are empty arrays stored inside /structure or elsewhere — design decision worth pinning. For MVP, omit /data row beyond the anchor reference; column values can be surfaced in a later increment.
+- Multiple files dropped at once: ONE event. Multiple anchors (one per file). Paths under each anchor. One cgp-state-change dispatch at the end.
+
+**Why one event per drop. The drop is a single user gesture — one "state change" event to the host. Each file is a distinct anchor under that event. This preserves the "event = one boundary-crossing" semantics.**
+
+### 4. Drop Target Resolution
+
+The `<cgp-drag-and-drop>` element resolves its drop target via the
+`cgp-target` attribute, which holds a CSS selector scoped to the wrapper.
+
+**Example usage:**
+
+```html
+<cgp-drag-and-drop system-id="0" observatron-id="1" cgp-target=".drop-target">
+  <div class="drop-target">Drop a CSV here</div>
+  <div class="preview">Last drop: —</div>
+</cgp-drag-and-drop>
+```
+
+**Resolution rules:**
+
+1. **Attribute present, selector matches one element:** Use that element as the drop target.
+2. **Attribute present, selector matches multiple elements:** Use the first match. Log a console warning.
+3. **Attribute present, selector matches zero elements:** Throw an error at `connectedCallback` time.
+4. **Attribute missing:** Fall back to `this.querySelector(":scope > *:first-child")` for backward compatibility with the Quick Start.
+5. **Attribute present but empty (`cgp-target=""`):** Throw an error.
+
+**Lifecycle:**
+
+- Resolution happens in `connectedCallback`, once per mount.
+- If the targeted element is later removed from the DOM, the wrapper does not re-resolve.
+- The resolved element's reference is stored on the instance for use by the drop handler.
+
+**Implementation note:** The attribute name is hyphenated (`cgp-target`, not `cgpTarget`), matching Web Components convention and the existing `system-id` / `observatron-id` attributes. Read it via `this.getAttribute('cgp-target')`.
+
+### 5. Directory Structure and Module Loading
+
+**File layout for the MVP:**
+
+```
+/
+├── index.html              — the demo page
+├── cgp-runtime.js          — UrlManager + createObservatron
+├── cgp-drag-and-drop.js    — the Custom Element
+├── events/
+│   └── state-change.json   — event definition
+└── fixtures/
+    └── sales.csv           — test fixture
+```
+
+Everything lives in the repo root or one level deep. No `/lib/`, no `/src/`, no build step. Files are served directly by a static server (`python -m http.server`, `npx serve`, etc.) and imported via relative paths.
+
+**Module loading:**
+
+The Quick Start section above uses npm-style import paths (`"cgp-components/drag-and-drop"`) for illustrative purposes — that's what a published package would look like. For the MVP build, all files are local and imported via relative paths:
+
+```html
+<script type="module" src="./cgp-runtime.js"></script>
+<script type="module" src="./cgp-drag-and-drop.js"></script>
+```
+
+The event definition JSON is loaded via fetch at runtime, not statically imported, to keep the runtime portable across modules that don't support JSON imports:
+
+```javascript
+const eventDef = await fetch('./events/state-change.json').then(r => r.json());
+```
+
+No TypeScript. No bundler. No package manager. Plain ES modules served by a static server.
+
+
+### 6. Test Fixture
+
+Location: `/fixtures/sales.csv`
+
+Contents (exact, byte-for-byte):
+
+```csv
+Date,Oil Price,Location
+2026-01-15,72.45,Houston
+2026-01-16,73.12,Rotterdam
+2026-01-17,71.89,Singapore
+```
+
+Three columns, three data rows. Matches the three-variable example used in Step 2's worked calculation (m=3, n=9, 2⁹ = 512 configurations). Dropping this file produces a boundary the reader has already seen computed by hand.
+
+The file should be committed to the repo so any developer cloning it can drop the same bytes and produce the same URLs, without having to regenerate test data.
+
+
+### 7. Acceptance Criteria
+
+The MVP is complete when the following behaviors are observable in the demo page.
+
+**On page load:**
+
+The right panel (state display) shows a JSON object with exactly two entries:
+
+```json
+{
+  "cgp:/s/0": {
+    "/data": [{ "anchor": "cgp:/s/0" }],
+    "/meaning": [{ "symbol": "cgp:/s/0", "meaning": "user system" }],
+    "/structure": [
+      { "constraint-key": "kind", "constraint-value": "system" }
+    ],
+    "/context": [
+      {
+        "timestamp": "<ISO-8601-UTC-ms>",
+        "channel": "system-instantiated",
+        "key": "systemId",
+        "value": "0"
+      }
+    ]
+  },
+  "cgp:/s/0/o/1": {
+    "/data": [{ "anchor": "cgp:/s/0/o/1" }],
+    "/meaning": [{ "symbol": "cgp:/s/0/o/1", "meaning": "observatron" }],
+    "/structure": [
+      { "constraint-key": "kind", "constraint-value": "observatron" }
+    ],
+    "/context": [
+      {
+        "timestamp": "<ISO-8601-UTC-ms>",
+        "channel": "observatron-bound",
+        "key": "observatronId",
+        "value": "1"
+      }
+    ]
+  }
+}
+```
+
+Timestamps are real ISO 8601 UTC millisecond-precision strings (e.g., `2026-04-23T22:30:00.123Z`). No console errors.
+
+**After dropping `fixtures/sales.csv`:**
+
+The state panel shows exactly 7 entries:
+
+1. `cgp:/s/0` — the system (unchanged from page load)
+2. `cgp:/s/0/o/1` — the observatron (unchanged)
+3. `cgp:/s/0/o/1/c/state-change/0` — the event (new)
+4. `cgp:/s/0/o/1/c/state-change/0/a/0` — the anchor, `/meaning` = `sales.csv`
+5. `cgp:/s/0/o/1/c/state-change/0/a/0/p/0` — the Date column, `/meaning` = `Date`
+6. `cgp:/s/0/o/1/c/state-change/0/a/0/p/1` — the Oil Price column, `/meaning` = `Oil Price`
+7. `cgp:/s/0/o/1/c/state-change/0/a/0/p/2` — the Location column, `/meaning` = `Location`
+
+A `cgp-state-change` CustomEvent fires exactly once, with:
+
+```javascript
+event.detail = {
+  event: "cgp:/root/events/observatron/state-change",
+  state: <the full object above>
+}
+```
+
+**After dropping `fixtures/sales.csv` a second time:**
+
+New entries appear under `cgp:/s/0/o/1/c/state-change/1` (note the counter incremented from 0 to 1). The first drop's entries remain in state. The event counter is per-channel-per-observatron, as specified in the URL Schema section.
+
+Total entries after two drops: 12 (the original 2 + 5 from first drop + 5 from second drop).
+
+**Out of scope for the MVP:**
+
+- Dark fraction computation (δ). The state panel shows the facet store; it does not compute or display δ.
+- Claim log materialization. No `cgp:/s/0/o/1/claims/...` URLs are minted.
+- Persistence. Page reload clears all state.
+- Multiple observatrons on one page.
+- Back-end bindings (SQL, API).
+- Error recovery for malformed CSVs beyond "empty file = no paths minted."
+
+Any of these can be addressed in subsequent increments. The MVP's job is to make the four-facet graph materialize from a real user gesture, so every subsequent feature has a concrete runtime to build against.
+
+## Status Check — MVP Implementation Progress
+
+From the original list of missing items for Claude Code to build an unambiguous MVP:
+| Task | In Progress | Testing | Done |
+|---|:---:|:---:|:---:|
+| 1. Runtime API Contract |  |  | ✅ |
+| 2. Event Definition File Structure |  |  | ✅ |
+| 3. Drop Handler Minting Sequence |  |  | ✅ |
+| 4. Drop Target Resolution (`cgp-target`) |  |  | ✅ |
+| 5. Directory Structure and Module Loading |  |  | ✅ |
+| 6. Test Fixture |  |  | ✅ |
+| 7. Acceptance Criteria |  |  | ✅ |
