@@ -19,7 +19,7 @@ Every addressable unit in any system — a CSV column, a system prompt workflow 
 - **Data** — The content wrapped by **Context Graph Protocol Language** (*CGPL*) markup and captured at an interaction event.
 - **Meaning** — The semantic domain the data refers to: what it *is about* in the world, not what it *is* on the page.
 - **Structure** — The constraints, generators, and validators of a schema (JSON Schema syntax is default).
-- **Context** — A metadata log of temporal events related to dark uncertainty calculations.
+- **Context** — A time-ordered metadata log of events that have occurred on this unit — rule firings, resolutions, asks, answers, state changes.
 
 Same four facets everywhere. That uniformity is the geometry. Once it's in place, the invisible becomes addressable with a URL. Before we can do anything, we need to be able to measure it. Without a shared geometry, there's no shared "perspective lines" to make comparisons at all.
 
@@ -31,47 +31,62 @@ $$\delta = 1 - \frac{|B_r|}{2^n}$$
 
 <p align="center"><em>δ = 1 − |B<sub>r</sub>| / 2<sup>n</sup></em></p>
 
-Here n is the number of facets (4) and r is how many are populated.
+Data is part of the Shannon "message" — the communicated information in a transmission event. Its presence is what brings the spike into existence; a spike that isn't attached to the observatron's surface doesn't exist. Each spike is still a full tetrahedron geometrically, with Data as the base anchoring it to the node and Meaning, Structure, and Context rising as the three elevated faces. Uncertainty can only accumulate along those three elevated dimensions.
 
-**What δ = 0.31 means in practice.** Consider a CSV column labeled `Date` with values like `2026-01-15`. The user dropped the file, so `/data` is populated. The header "Date" tells us the column is *about* dates — `/meaning` is populated. But the format isn't declared (ISO? US? European?), the timezone is unknown, and no semantic resolution has been logged — so `/structure` and `/context` remain dark. Two of four facets populated. δ = 0.31. That score says: *31% of the configuration space for this column is still unresolved — an agent interpreting this column is making assumptions the system cannot see or verify.*
+For a boundary with m variables, the formula operates on n = 3m verifiable facets — three per variable (Meaning, Structure, Context). r is how many of those facets have been verified. |B_r| is the Hamming ball cardinality. 2ⁿ is the joint configuration space.
 
-A field with only one facet populated is ~69% dark; populate a second and δ drops to ~31%; populate all four and δ is 0. Closing each gap is a specific, countable action. Manual reduction becomes a measurable benchmark.
+Worked example — *δ = 74.61%*. A CSV drop with three variables: Date, Oil Price, Location. Only Date has been fully verified (all 3 of its facets populated); Oil Price and Location are untouched. So m = 3, n = 9, r = 3. The Hamming ball |B_3| = C(9,0) + C(9,1) + C(9,2) + C(9,3) = 1 + 9 + 36 + 84 = 130. That gives δ = 1 − 130/512 = 0.7461.
+
+**The system is operating somewhere in a space of 512 possible configurations but can only confirm 130 of them. 74.61% of the boundary's interpretation space is unreachable by any within-boundary diagnostic.**
+
+Closing each facet gap is a specific, countable action. Manual reduction becomes a measurable benchmark — the progression table below shows how δ moves as verifications accumulate.
 
 #### Symbol Legend
 
 | Symbol | Name | Description |
 |---|---|---|
-| `δ` | dark fraction | The computed output: the fraction of the configuration space that is still unresolved. Ranges from 0 (fully known) to nearly 1 (fully dark). A unitless ratio. |
-| `n` | facet count | The number of facets the geometry defines. Fixed at 4 in CGP (data, meaning, structure, context). Sets the dimensionality of the configuration space. |
-| `r` | resolved count | The number of facets that have been populated for this unit. Ranges from 0 (nothing known) to n (everything known). The variable that moves as facets are closed. |
-| `B_r` | Hamming ball of radius r | The set of configurations within Hamming distance r of the fully-known state. Represents how much of the configuration space is accounted for by having r facets resolved. |
-| `\|B_r\|` | cardinality of B_r | The count of elements in the Hamming ball. Computed as Σ C(n, k) for k = 0..r. This is the combinatorial core of the formula — it grows faster than linearly, which is why each facet populated drops δ by more than 1/n. |
-| `2ⁿ` | total configuration space | The count of all possible configurations in n-dimensional binary space. With n=4, this is 16. The denominator that `\|B_r\|` is compared against. |
+| `δ` | dark fraction | The computed score. Fraction of the joint configuration space still unresolved. Ranges from 0 (fully verified) to nearly 1 (fully dark). Unitless. |
+| `m` | variable count | Number of variables at the boundary — columns in a dataset, fields in a form, slots in a query. |
+| `n` | facet count | Total verifiable facets, always **3m**. Three facets per variable: Meaning, Structure, Context. Data anchors the spike but is not verifiable in the score. |
+| `r` | verified count | How many of the n facets have been populated with a verification value. Moves from 0 to n as reduction happens. |
+| `B_r` | Hamming ball of radius r | The set of configurations reachable within r verifications of the fully-verified state. |
+| `\|B_r\|` | cardinality of B_r | Count of configurations in the Hamming ball. Computed as Σ C(n, k) for k = 0..r. |
+| `2ⁿ` | joint configuration space (\|Ω\|) | All possible configurations across the n verifiable facets. For m=3, n=9 and 2⁹ = 512. |
 
-#### Facet Population Progression
 
-| Facets populated (r) | \|B_r\| | δ | Approximation |
+#### Facet Population Progression (m=3, n=9)
+
+For a three-variable boundary, δ moves through these values as facets are verified. Open the **Dark Fraction Calculator** and toggle facets to watch this progression live:
+
+| Facets verified (r) | \|B_r\| | δ = 1 − \|B_r\|/512 | Approximation |
 |---|---|---|---|
-| 0 | 1 | 1 − 1/16 = 0.9375 | ~94% dark |
-| 1 | 5 | 1 − 5/16 = 0.6875 | ~69% dark |
-| 2 | 11 | 1 − 11/16 = 0.3125 | ~31% dark |
-| 3 | 15 | 1 − 15/16 = 0.0625 | ~6% dark |
-| 4 | 16 | 0 | 0% dark |
+| 0 | 1 | 1 − 1/512 | ~99.8% dark |
+| 1 | 10 | 1 − 10/512 | ~98.0% dark |
+| 2 | 46 | 1 − 46/512 | ~91.0% dark |
+| 3 | 130 | 1 − 130/512 | ~74.6% dark |
+| 4 | 256 | 1 − 256/512 | ~50.0% dark |
+| 5 | 382 | 1 − 382/512 | ~25.4% dark |
+| 6 | 466 | 1 − 466/512 | ~9.0% dark |
+| 7 | 502 | 1 − 502/512 | ~2.0% dark |
+| 8 | 511 | 1 − 511/512 | ~0.2% dark |
+| 9 | 512 | 0 | 0% dark |
+
+Notice the S-curve. The first verifications barely move δ — the unverified space is combinatorially enormous. The middle verifications drop δ sharply. The final verifications finish the collapse. Verification effort pays off most in the middle of the reduction loop.
+
+#### Source of Truth
+The Dark Fraction Calculator is the canonical reference implementation of this formula. Any claim in this spec about what δ should be for a given (m, r) pair can be verified by setting up that configuration in the calculator. The calculator handles large-m computation via log-space arithmetic; for m > 20, |Ω| exceeds a million configurations and naive integer math breaks. Implementations should follow the calculator's log-space approach when scaling.
+
+
 
 ### Step 3 — Minimize Dark Uncertainty with Observatrons
 
-Now the work has a target. You can't mechanize "reduce uncertainty" — that's not a spec. You can mechanize "populate this field's meaning facet given these inputs" — that's an engineering problem with a definition of done. We call the unit that performs this work an **observatron**: an autonomous state machine stationed at a boundary, watching what crosses, and resolving facets either deterministically or by asking a human.
+Observatrons can mechanize a specific task: *populate this facet given these inputs*. That's an engineering problem with a definition of done — not a vague "reduce uncertainty" goal. An **observatron** is the unit that performs this work: an autonomous state machine stationed at a boundary, watching what crosses, and resolving facets either deterministically or by asking a human.
 
 In our **Getting Started** example, we will focus on Observatrons across the entire stack — minimal, but end-to-end:
+
 - **UX**: The drag & drop area in HTML
 - **API**: Back-end service layer
-- **SQL**: Intent Mapping to query slots
-
-### Why This Matters
-
-Skip steps 1 and 2 and you don't get interoperable AI. You don't get semantic exchange across systems.
-
-You get closed-system illusions that hold together until they meet another system and silently diverge, because nobody ever made the assumptions visible enough to compare. That's when things start silently breaking in hard-to-trace patterns.
+- **SQL**: Intent mapping to query slots
 
 
 ----
@@ -80,30 +95,19 @@ You get closed-system illusions that hold together until they meet another syste
 
 The **Context Graph Protocol** is a syntax that layers over any other syntax — HTML, system prompts, CSV, JSON, SQL, plain text — to bind addressable units across systems to a shared four-facet geometry.
 
-Three facets describe a unit at rest:
-- **Data** — what it is
-- **Meaning** — what it refers to
-- **Structure** — how it's encoded
+Of the four facets introduced in Step 1, each plays a distinct role:
 
-The fourth is different: **Context** is a time-ordered log where external actions leave their trace on the node. If data, meaning, and structure are the node's shape, context is where energy meets that shape. Every interaction, every event, every timestamped action appends a row to some unit's context. The graph grows by collision.
+Data is the Shannon message — the communicated information in a transmission event. It anchors the spike to the observatron's surface.
+Meaning and Structure describe the message statically — what it refers to and how it's encoded.
+Context is different: it's a time-ordered log where external actions leave their trace on the node. If Meaning and Structure describe the message, Context records its collisions with the world. The graph grows by collision.
 
-Because the graph's shape adapts as actions flow through it, we call it **Liquid** — the protocol's substrate moves between hosts and media without losing identity, taking whichever shape its container demands.
-
-## Core Mission: Minimize Dark Uncertainty for Better Decisions
-
-Following principles from Active Inference, the core purpose of the protocol is to identify and minimize dark uncertainty in a transparent way, so that beliefs across the system and with the intent of the user can be verified.
-
-This is different from the semantic approach of **invariance**. In CGP, the user — in their local environment, with their own words — has **semantic sovereignty**. They are responsible for their intent, and their language can be understood by a system that integrates with semantic interoperability, if chosen by the CGP architect.
-
-When the fraction of Dark Uncertainty is higher than a threshold, an **ASK** event is fired — an *internal* decision gate. *External* decision models will have a clear understanding of dark uncertainty so that they can make better decisions.
-
-Minimizing Dark Uncertainty means thinking about the internals and externals of system boundaries. Observatrons are the computable automata for designing and architecting a unit on a system boundary that can observe dark uncertainty and resolve it — by combining deterministic rules with human interactions when needed.
+Because the graph's shape adapts as actions flow through it, we call it Liquid — the protocol's substrate moves between hosts and media without losing identity, taking whichever shape its container demands.
 
 ## Try It Yourself — Dark Fraction Calculator
 
 Before diving into code, play with the geometry directly. The **Dark Fraction Calculator** lets you toggle facets on a single field and watch δ change in real time.
 
-![Dark Fraction Calculator](figures/dark-fraction-calculator.png)
+![Dark Fraction Calculator](figures/dark_fraction_calculator.png)
 
 <a href="https://w3c-context-graph-community-group.github.io/dark_fraction/calculator/" target="_blank" rel="noopener noreferrer">→ Open the Dark Fraction Calculator</a>
 
@@ -179,7 +183,7 @@ Five nodes. Each path node is a spike — a column with its four facets ready fo
 4. **A dataset was minted** for the CSV (`cgp:/s/0/o/1/e/0/d/0`).
 5. **A path was minted** for the Date column (`cgp:/s/0/o/1/e/0/d/0/p/0`).
 
-Each node carries its four facets. The Date column's spike has `/data` populated (the values) and `/context` logged (column-detected). Its `/meaning` and `/structure` are partially populated from the header row — but "Date" as a string doesn't tell you the timezone or the semantic domain. That's where dark uncertainty lives. The remaining sections of this guide explain how to close those gaps.
+Each node carries its four facets. The Date column is a spike with three verifiable facets (Meaning, Structure, Context). Data — the column values — anchors the spike to the observatron's surface. At drop time, none of the three verifiable facets have actual verification values yet: the header "Date" is just a label, not a semantic resolution. So this one-column boundary has m=1, n=3, r=0, and δ ≈ 0.875. That's where dark uncertainty lives, and the rest of this guide explains how to close those gaps.
 
 ## CGP URL Structure
 
@@ -282,15 +286,15 @@ Claims become load-bearing when two independent systems must **compare** their g
 
 Until one of these use cases is active, the claims log is not instantiated. The facet store remains the source of truth, and the claim form is projected on demand when exchange or audit is needed.
 
-## How Everything Ties Together
+## Machinery Summary
 
-CGP is a **universal gauge**. The same four-facet geometry applies to any addressable unit in any medium. That uniformity gives you three capabilities in sequence:
+Every section of this guide introduces one piece of machinery serving the three-step loop:
 
-1. **See** dark uncertainty — by populating the four facets, unnamed assumptions become nameable gaps.
-2. **Reduce** it — each facet populated is a countable, auditable step.
-3. **Mechanize** the reduction — observatrons stationed at boundaries resolve facet gaps automatically, escalating to humans only when needed.
-
-Everything else in the protocol is machinery serving these three capabilities. URLs address the nodes. Facets store the content. Emissions record what crossed. Claims exchange the graph between systems. Observatrons do the work.
+- **URLs** address the nodes (→ URL Structure section).
+- **Facets** store the content (→ Step 1, Quick Start).
+- **Emissions** record what crossed the boundary (→ Quick Start).
+- **Claims** exchange the graph between systems (→ Claims section).
+- **Observatrons** do the work (→ Step 3, Pilot).
 
 ## The Pilot
 
@@ -298,7 +302,7 @@ The protocol is tested end-to-end with a **single-observatron, two-boundary pilo
 
 ### Boundary 1 — Front End
 
-A user drops a CSV containing a column like `name: "John Smith"`. The observatron over the drag-and-drop wrapper mints the usual nodes and populates facets. The Date column arrives with `/data` and headers populated but `/meaning` and `/structure` partially dark — timezone unknown, semantic domain unspecified. Dark fraction is measurable. The observatron either resolves facets with deterministic rules or fires an ASK to the user.
+A user drops a CSV containing columns like name (with values like "John Smith") and date (with values like "2026-01-15"). The observatron over the drag-and-drop wrapper mints the usual nodes and populates facets. Each column arrives with Data anchored but Meaning, Structure, and Context not yet verified — which name refers to which real-world person? what timezone applies to the dates? Dark fraction is measurable. The observatron either resolves facets with deterministic rules or fires an ASK to the user.
 
 ### Boundary 2 — Back End
 
