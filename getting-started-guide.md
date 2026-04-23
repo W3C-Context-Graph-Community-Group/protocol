@@ -45,6 +45,87 @@ Because the graph's shape adapts as actions flow through it, we call it **Liquid
 
 This guide shows you how to wrap any component on any medium with CGP tags, compute dark fraction against the four-facet geometry, and build the first piece of machinery — the drag-and-drop demo — that makes this concrete.
 
-## Quick Start
+## Core Mission: Minimize Dark Uncertainty for Better Decisions
 
-[... existing Quick Start content ...]
+Following principles from Active Inference, the core purpose of the protocol is to identify and minimize dark uncertainty in a transparent way, so that beliefs across the system and with the intent of the user can be verified.
+
+This is different than the semantic approach of **invariance**. In CGP, the user, in their local environment, and with their own words, has **semantic sovereignty**. They are responsible their intent and their language can be understood by a system that can integrate with semantic interoperability, if chosen by the CGP architect.
+
+When the fraction of Dark Uncertainty is higher than a threshold, an "ASK" event is fired, which is an **internal** decision gate. **External** decision models will have a clear understanding of dark uncertainty so that they can make better decisions.
+
+Minimizing Dark Uncertainty means thinking about the internals and externals of system boundaries.
+
+We introduce **observatrons** as a computable automata for designing and architecting a unit on a system boundary that can observe dark uncertainty and resolve it by using a combination of decision-making with and without human interactions.
+
+### Dark Fraction Calculator
+
+Before diving into code, play with the geometry directly. The **Dark Fraction Calculator** lets you toggle facets on a single field and watch δ change in real time.
+
+![Dark Fraction Calculator](figures/figure-1.png)
+
+<a href="https://w3c-context-graph-community-group.github.io/dark_fraction/calculator/" target="_blank" rel="noopener noreferrer">→ Open the Dark Fraction Calculator</a>
+
+Click **M** to populate Meaning, **S** for Structure, and **C** for Context. Each click closes one facet gap and reduces the dark fraction. Start with everything off and close facets one at a time until you reach δ = 0. That's the full manual reduction loop in about four clicks.
+
+This is the core interaction the protocol enables. Everything in the rest of this guide — wrappers, URL structure, the runtime, the demo — is machinery to surface this same loop across real systems.
+
+## CGP URL Structure
+
+Every URL is five positional slots. Each is prefixed by a single letter.
+
+```
+/s/<system-id>/o/<observatron-id>/e/<emission-id>/d/<dataset-id>/p/<path>
+```
+
+Full form with scheme: `cgp:/s/1/o/1/e/0/d/0/p/0`.
+
+### Slots
+
+| Slot | Prefix | What it addresses |
+|---|---|---|
+| system | `s` | Unit of scope. Instantiates observatrons. |
+| observatron | `o` | Agent stationed at a boundary. The node. |
+| emission | `e` | One act of observation. |
+| dataset | `d` | One data region produced by an emission (e.g., one CSV, one JSON, one message). |
+| path | `p` | One unit within a dataset (e.g., one column, one JSON Pointer target). |
+
+### IDs
+
+**System and observatron IDs are user-supplied** — typically integers, but any URL-safe string works.
+
+**Emission, dataset, and path IDs are auto-generated integers starting at 0**, scoped to their parent. Counters reset per parent: each emission numbers its own datasets from `0`; each dataset numbers its own paths from `0`.
+
+### Facets
+
+Every URL has four facets, written as terminal path segments:
+
+```
+<url>/data        what it is
+<url>/meaning     definition
+<url>/structure   constraints & validation
+<url>/context     a time-ordered metadata log 
+```
+
+All four apply at every slot depth. `/s/1/data` is valid. So is `/s/1/o/1/e/0/d/0/p/0/data`.
+
+### Truncation
+
+Any prefix of the slot pattern is a node. Each has its own four facets.
+
+```
+/s/1                          the system
+/s/1/o/1                      an observatron
+/s/1/o/1/e/0                  an emission
+/s/1/o/1/e/0/d/0              a dataset
+/s/1/o/1/e/0/d/0/p/0          a path
+```
+
+### Reserved
+
+The system id `root` is reserved for the protocol's own self-description. All other IDs — including `0`, `1`, `2`, … — are available to user systems.
+
+### Extending Vocabulary
+
+- root
+- claims
+- events
