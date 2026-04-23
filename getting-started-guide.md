@@ -10,6 +10,45 @@ Without a shared coordinate system, you can't even tell there's something to mea
 
 We call the fraction of assumptions that are operating without being named **Dark Uncertainty**. It is computable, reducible, and — crucially — a prerequisite for anything else.
 
+## Important Information 
+Please read the following, it is an important principle to understand.
+
+### IDs, References, and Instances
+
+In CGP, the **URL is the identity**. When one part of the graph refers to another, it holds the target's URL — there are no separate "ID" values distinct from addresses. ID, reference, and address are the same concept, looked at from different directions.
+
+- An **ID** is a URL — the permanent address of a node.
+- A **reference** is a URL placed inside another node's facet (for example, a claim's `channel` column holds the URL of an event definition).
+- An **instance** is what `/data` returns when the URL is dereferenced — the content at that identity.
+
+These aren't three different things with a mapping between them. They're one thing (the URL) described from three perspectives: *what you write down*, *what you point at*, *what you receive*. The URL is always the same URL; only the direction changes.
+
+This is why the `/data` facet exists: it is the **instance accessor**. Asking "what is at this URL?" is the same as asking "what is this URL's `/data`?" The other three facets (`/meaning`, `/structure`, `/context`) describe how to interpret the instance.
+
+### Examples:
+
+```
+cgp:/s/<system>/o/<observatron>/c/<channel-name>/<channel-event-id>/a/<anchor>/p/<path>
+```
+
+```
+cgp:/s/0
+  instance: "0" (or whatever the system is named)
+
+cgp:/s/0/o/1
+  instance: "1" (or whatever the observatron is named)
+
+cgp:/s/0/o/1/c/state-change/4
+  instance: summary of the 5th state-change event
+
+cgp:/s/0/o/1/c/state-change/4/a/0
+  instance: the anchor's payload (e.g., a CSV file's contents)
+
+cgp:/s/0/o/1/c/state-change/4/a/0/p/0
+  instance: the column's values (the leaf payload)
+```
+
+
 ## Motivation
 
 ### Step 1 — See Dark Uncertainty (The Four Facet Model)
@@ -159,41 +198,14 @@ Every observation dispatches a `cgp-state-change` CustomEvent. Listen anywhere o
 
 The `event.detail.state` is a flat object keyed by URL, with each URL's four facets as its value.
 
-### Drop a CSV
 
-Drop a single-column CSV onto the target. The console logs the full URL set:
+## CGP URL Schema
 
-```json
-{
-  "cgp:/s/0":                       { "/data": "0", "/meaning": "0", "/structure": { "kind": "system" }, "/context": [ /* ... */ ] },
-  "cgp:/s/0/o/1":                   { "/data": "1", "/meaning": "1", "/structure": { "kind": "observatron" }, "/context": [ /* ... */ ] },
-  "cgp:/s/0/o/1/e/0":               { "/data": [ /* ... */ ], "/meaning": "0", "/structure": { "kind": "emission", "trigger": "drop" }, "/context": [ /* ... */ ] },
-  "cgp:/s/0/o/1/e/0/d/0":           { "/data": "Date\n2026-01-15\n2026-01-16", "/meaning": "sales.csv", "/structure": { "kind": "dataset", "format": "csv" }, "/context": [ /* ... */ ] },
-  "cgp:/s/0/o/1/e/0/d/0/p/0":       { "/data": ["2026-01-15", "2026-01-16"], "/meaning": "Date", "/structure": { "kind": "path", "type": "string" }, "/context": [ /* ... */ ] }
-}
-```
-
-Five nodes. Each path node is a spike — a column with its four facets ready for dark fraction measurement.
-
-### What you just ran
-
-1. **A system was declared** (`cgp:/s/0`) when the page loaded.
-2. **An observatron was stationed** at the wrapped boundary (`cgp:/s/0/o/1`).
-3. **An emission fired** when you dropped the file (`cgp:/s/0/o/1/e/0`).
-4. **A dataset was minted** for the CSV (`cgp:/s/0/o/1/e/0/d/0`).
-5. **A path was minted** for the Date column (`cgp:/s/0/o/1/e/0/d/0/p/0`).
-
-Each node carries its four facets. The Date column is a spike with three verifiable facets (Meaning, Structure, Context). Data — the column values — anchors the spike to the observatron's surface. At drop time, none of the three verifiable facets have actual verification values yet: the header "Date" is just a label, not a semantic resolution. So this one-column boundary has m=1, n=3, r=0, and δ ≈ 0.875. That's where dark uncertainty lives, and the rest of this guide explains how to close those gaps.
-
-## CGP URL Structure
-
-Every URL is five positional slots. Each is prefixed by a single letter.
+Every CGP URL follows a single positional pattern. Each segment is prefixed by a single letter naming the slot; the value after the letter identifies the instance.
 
 ```
-/s/<system-id>/o/<observatron-id>/e/<emission-id>/d/<dataset-id>/p/<path>
+cgp:/s/<system>/o/<observatron>/c/<channel-name>/<event-n>/a/<anchor>/p/<path>
 ```
-
-Full form with scheme: `cgp:/s/1/o/1/e/0/d/0/p/0`.
 
 ### Slots
 
@@ -201,41 +213,44 @@ Full form with scheme: `cgp:/s/1/o/1/e/0/d/0/p/0`.
 |---|---|---|
 | system | `s` | Unit of scope. Instantiates observatrons. |
 | observatron | `o` | Agent stationed at a boundary. The node. |
-| emission | `e` | One act of observation. |
-| dataset | `d` | One data region produced by an emission (e.g., one CSV, one JSON, one message). |
-| path | `p` | One unit within a dataset (e.g., one column, one JSON Pointer target). |
+| channel | `c` | The kind of event — references a definition under `cgp:/root/events/`. The channel name is the segment; the event index follows. |
+| event | — | The instance counter within a channel. Auto-incremented, per-channel, per-observatron. |
+| anchor | `a` | One anchor produced by an event — one file, one message, one API payload. The base of a set of spikes. |
+| path | `p` | One spike — a column, a field, a JSON Pointer target within the anchor. |
 
 ### IDs
 
 **System and observatron IDs are user-supplied** — typically integers, but any URL-safe string works.
 
-**Emission, dataset, and path IDs are auto-generated integers starting at 0**, scoped to their parent. Counters reset per parent: each emission numbers its own datasets from `0`; each dataset numbers its own paths from `0`.
+**Channel names** come from the reserved registry `cgp:/root/events/`. The segment is the leaf name of that URL (e.g., `state-change`).
+
+**Event, anchor, and path IDs are auto-generated integers starting at 0**, scoped to their parent. Counters reset per parent: each channel numbers its events from `0` within one observatron; each event numbers its anchors from `0`; each anchor numbers its paths from `0`.
 
 ### Facets
 
 Every URL has four facets, written as terminal path segments:
 
 ```
-<url>/data        what it is
+<url>/data        the instance at this identity
 <url>/meaning     what it refers to
 <url>/structure   how it is encoded
 <url>/context     a time-ordered log of what has happened
 ```
 
-All four apply at every slot depth. `/s/1/data` is valid. So is `/s/1/o/1/e/0/d/0/p/0/data`.
+All four apply at every slot depth. `cgp:/s/0/data` is valid. So is `cgp:/s/0/o/1/c/state-change/4/a/0/p/0/data`.
 
-Every `/context` facet is a four-column table — `timestamp`, `category`, `key`, `value` — where rows accumulate in append-only order. Context is the collision surface: where actions, events, and timestamped interactions leave their trace on a node.
+Every `/context` facet is a four-column table — `timestamp`, `channel`, `key`, `value` — where rows accumulate in append-only order. Context is the collision surface: where actions, events, and timestamped interactions leave their trace on a node.
 
 ### Truncation
 
 Any prefix of the slot pattern is a node. Each has its own four facets.
 
 ```
-/s/1                          the system
-/s/1/o/1                      an observatron
-/s/1/o/1/e/0                  an emission
-/s/1/o/1/e/0/d/0              a dataset
-/s/1/o/1/e/0/d/0/p/0          a path
+cgp:/s/0                                       the system
+cgp:/s/0/o/1                                   an observatron
+cgp:/s/0/o/1/c/state-change/4                  an event in a channel
+cgp:/s/0/o/1/c/state-change/4/a/0              an anchor
+cgp:/s/0/o/1/c/state-change/4/a/0/p/0          a spike (path)
 ```
 
 ### Reserved
@@ -246,87 +261,31 @@ Reserved namespaces under `cgp:/root`:
 
 | Segment | Purpose |
 |---|---|
-| `cgp:/root/events` | Registry of event type definitions. Each event lives at `cgp:/root/events/<source>/<name>` with the standard four facets. |
-| `cgp:/root/claims` | Reserved for future claim log storage. See Claims section. |
+| `cgp:/root/events` | Registry of channel definitions. Each channel lives at `cgp:/root/events/<source>/<name>` with the standard four facets. The leaf name is what appears as `<channel-name>` in observation URLs. |
+| `cgp:/root/claims` | Reserved for future claim log storage. |
 
-## Claims
+## The Canonical Claim Form
 
 A **claim** is a single assertion: at a specific time, a specific node said something about something. Claims are how CGP graphs are exchanged between systems and how the graph's history is made portable.
 
-The protocol's primary storage is the URL-addressed facet store you just saw in the Quick Start. Claims are a **view** over that store — projected when needed, not stored as the authoritative form. A running implementation reads and writes facets directly; claims are generated for export, comparison, and audit.
+Claims are a **view** over the URL-addressed facet store — projected when needed, not stored as the authoritative form. A running implementation reads and writes facets directly; claims are generated for export, comparison, and audit.
 
 ### The Five Columns
 
-Every claim has exactly five columns.
+Every claim has exactly five columns. Each is either a URL (acting as ID, reference, and address simultaneously — see "IDs, References, and Instances" above) or a literal.
 
 | Column | Holds | Example |
 |---|---|---|
-| `event-type` | URL of the kind of claim being made. References a definition under `cgp:/root/events/`. | `cgp:/root/events/observatron/state-change` |
-| `source` | URL of the node the claim originated from. | `cgp:/s/0/o/1/e/0` |
+| `channel` | URL of the channel definition — the kind of claim. | `cgp:/root/events/observatron/state-change` |
+| `source` | URL of the node that produced the claim. | `cgp:/s/0/o/1/c/state-change/4` |
 | `timestamp` | When the claim was made. ISO 8601 UTC, millisecond precision. | `2026-04-22T22:30:00.003Z` |
-| `key` | The URL the claim is about, typically with a facet reference. | `cgp:/s/0/o/1/e/0/d/0/p/0/data` |
-| `value` | The asserted value. A literal or a URL. | `["2026-01-15", "2026-01-16"]` |
+| `key` | Path within the facet being asserted about. | `/properties.event.type` |
+| `value` | The asserted value. A literal or a URL. | `"trade execution date"` |
 
-Read a claim left-to-right as a sentence: *at `timestamp`, `source` asserted that `key` has `value`, as a claim of kind `event-type`*.
+Read a claim left-to-right as a sentence: *at `timestamp`, `source` asserted that the facet at `key` has `value`, as a claim of kind `channel`*.
 
 ### Identity Is Positional
 
 When claims are stored as an ordered array, the position in the array is the claim's identity. No `id` column is needed — index N is claim N.
 
-Individual claims become URL-addressable when they need to be referenced: claim N in observatron O's log is addressable as `cgp:/s/<sid>/o/<oid>/claims/<n>`. The URL is constructed on demand from the log's location and the claim's index; it does not live inside the claim itself.
-
-### When Claims Are Needed
-
-Claims become load-bearing when two independent systems must **compare** their graphs. In a single-implementation, single-session context — like the Quick Start above — reading facets directly from the store is sufficient. Claims are needed for:
-
-- Exchanging graph state between implementations (wire format).
-- Auditing who asserted what, when (provenance).
-- Reconciling disagreements across observatrons (comparison).
-- Replaying history deterministically (fixtures, testing).
-
-Until one of these use cases is active, the claims log is not instantiated. The facet store remains the source of truth, and the claim form is projected on demand when exchange or audit is needed.
-
-## Machinery Summary
-
-Every section of this guide introduces one piece of machinery serving the three-step loop:
-
-- **URLs** address the nodes (→ URL Structure section).
-- **Facets** store the content (→ Step 1, Quick Start).
-- **Emissions** record what crossed the boundary (→ Quick Start).
-- **Claims** exchange the graph between systems (→ Claims section).
-- **Observatrons** do the work (→ Step 3, Pilot).
-
-## The Pilot
-
-The protocol is tested end-to-end with a **single-observatron, two-boundary pilot**. One observatron watches a user-facing CSV drop and a database-facing SQL resolution — the same protocol, the same geometry, running across the front-to-back seam most systems fail at silently.
-
-### Boundary 1 — Front End
-
-A user drops a CSV containing columns like name (with values like "John Smith") and date (with values like "2026-01-15"). The observatron over the drag-and-drop wrapper mints the usual nodes and populates facets. Each column arrives with Data anchored but Meaning, Structure, and Context not yet verified — which name refers to which real-world person? what timezone applies to the dates? Dark fraction is measurable. The observatron either resolves facets with deterministic rules or fires an ASK to the user.
-
-### Boundary 2 — Back End
-
-The same observatron also watches the SQL query that attempts to resolve "John Smith" against a `users` table. If there are ten John Smiths in the database, the query's result column has ten candidate values — high dark fraction on `/meaning` (which John?). The observatron surfaces this ambiguity the same way it surfaces front-end ambiguity: by measuring δ and firing an ASK.
-
-### What the Pilot Proves
-
-| Claim | How it's demonstrated |
-|---|---|
-| Front-end and back-end geometries are the same geometry. | Both boundaries use the same four facets, the same URL structure, the same δ formula. No translation layer. |
-| Dark fraction reduction composes across boundaries. | The user's front-end disambiguation directly lowers back-end δ by narrowing the SQL result set. |
-| δ is the single metric. | The pilot measures δ_start and δ_end on both sides. The difference is the value the observatron delivered. |
-
-### The Simplest Agentic Workflow
-
-Agent receives CSV → protocol measures δ → agent closes facet gaps (deterministically or by asking the user) → disambiguated result becomes a SQL query → back-end observatron measures query's δ → loop exits when δ is below threshold.
-
-No black-box "did it work." Just a measurable reduction from δ_start to δ_end, visible at every step.
-
-## What's Next
-
-The getting-started guide above covers the protocol's concepts and the front-end demo. Subsequent documents cover:
-
-- **Runtime API** — `createObservatron`, `mintEmission`, `mintDataset`, `mintPath`, `getState`.
-- **Derivation fixtures** — input/output pairs that conforming implementations must match byte-for-byte.
-- **Events registry** — the canonical list of event-type URLs and their facet definitions.
-- **Back-end bindings** — how observatrons are stationed on SQL boundaries, API endpoints, and other non-DOM surfaces.
+Individual claims become URL-addressable when they need to be referenced: claim N in a channel's log is addressable under `cgp:/s/<s>/o/<o>/c/<channel>/<event-n>`. The URL is constructed on demand from the log's location and the claim's position; it does not live inside the claim itself.
