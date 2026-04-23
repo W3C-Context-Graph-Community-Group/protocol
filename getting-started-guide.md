@@ -85,6 +85,72 @@ Data is part of the Shannon "message" — the communicated information in a tran
 
 For a boundary with m variables, the formula operates on n = 3m verifiable facets — three per variable (Meaning, Structure, Context). r is how many of those facets have been verified. |B_r| is the Hamming ball cardinality. 2ⁿ is the joint configuration space.
 
+#### Calculating δ by Hand — The Simplest Case (m=1, n=3)
+
+Before the three-variable example, work through the simplest possible boundary: one column, fully unverified. This walks the formula step by step — the kind of thing you could compute on a napkin.
+
+**Setup.** A CSV drop with one column: `Date`. No facets have been verified yet. So m = 1, n = 3m = 3, r = 0.
+
+**Step 1 — Find the joint configuration space: 2ⁿ.**
+
+With n = 3 verifiable facets, each facet is either verified (1) or not (0). That gives:
+
+| n | 2ⁿ | meaning |
+|---|---|---|
+| 3 | 8 | 8 possible configurations of (Meaning, Structure, Context) |
+
+The boundary lives somewhere in this space of 8 configurations. δ measures how much of that space is still unreachable.
+
+**Step 2 — Count the Hamming ball |B_r|.**
+
+The Hamming ball of radius r is the set of configurations reachable within r verifications of the fully-verified state. Count it by summing binomial coefficients:
+
+$$|B_r| = \sum_{k=0}^{r} \binom{n}{k}$$
+
+For our case (n=3, r=0), only one term matters:
+
+| k | C(n, k) | meaning |
+|---|---|---|
+| 0 | C(3, 0) = 1 | one configuration: the fully-verified state itself |
+
+So |B_0| = 1.
+
+**Step 3 — Plug into the formula.**
+
+$$\delta = 1 - \frac{|B_r|}{2^n} = 1 - \frac{1}{8} = 0.875$$
+
+**δ = 87.5%.** A one-column boundary with no facets verified is 87.5% dark.
+
+That matches the Quick Start's claim that dropping a one-column CSV yields δ ≈ 0.875 at drop time.
+
+**Step 4 — Watch it change as you verify.**
+
+Verify one facet — say, Meaning — and r becomes 1. Now:
+
+- |B_1| = C(3,0) + C(3,1) = 1 + 3 = 4
+- δ = 1 − 4/8 = 0.5 (50% dark)
+
+Verify Structure too, and r = 2:
+
+- |B_2| = C(3,0) + C(3,1) + C(3,2) = 1 + 3 + 3 = 7
+- δ = 1 − 7/8 = 0.125 (12.5% dark)
+
+Verify Context — r = 3, all facets populated:
+
+- |B_3| = 1 + 3 + 3 + 1 = 8
+- δ = 1 − 8/8 = 0 (0% dark)
+
+| Facets verified (r) | \|B_r\| | δ = 1 − \|B_r\|/8 | Approximation |
+|---|---|---|---|
+| 0 | 1 | 1 − 1/8 | 87.5% dark |
+| 1 | 4 | 1 − 4/8 | 50% dark |
+| 2 | 7 | 1 − 7/8 | 12.5% dark |
+| 3 | 8 | 0 | 0% dark |
+
+Three verifications move δ from 87.5% down to 0 in discrete, measurable jumps. No ambiguity. No calibration needed. Verification, count, recompute.
+
+Now scale up: with three columns (m=3), you have n=9 verifiable facets instead of 3, and 2⁹ = 512 configurations instead of 8. The arithmetic gets bigger, but the procedure is identical.
+
 Worked example — *δ = 74.61%*. A CSV drop with three variables: Date, Oil Price, Location. Only Date has been fully verified (all 3 of its facets populated); Oil Price and Location are untouched. So m = 3, n = 9, r = 3. The Hamming ball |B_3| = C(9,0) + C(9,1) + C(9,2) + C(9,3) = 1 + 9 + 36 + 84 = 130. That gives δ = 1 − 130/512 = 0.7461 (74.61%).
 
 **The system is operating somewhere in a space of 512 possible configurations but can only confirm 130 of them. 74.61% of the boundary's interpretation space is unreachable by any within-boundary diagnostic.**
