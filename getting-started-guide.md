@@ -28,7 +28,7 @@ This is why the `/data` facet exists: it is the **instance accessor**. Asking "w
 ### Examples:
 
 ```
-cgp:/s/<system>/o/<observatron>/c/<channel-name>/<channel-event-id>/a/<anchor>/p/<path>
+cgp:/s/<system>/o/<observatron>/c/<channel-name>/<event-n>/a/<anchor>/p/<path>
 ```
 
 ```
@@ -69,7 +69,7 @@ Every addressable unit in any system — a CSV column, a system prompt workflow 
 - **Data** — The content wrapped by **Context Graph Protocol Language** (*CGPL*) markup and captured at an interaction event.
 - **Meaning** — The semantic domain the data refers to: what it *is about* in the world, not what it *is* on the page.
 - **Structure** — The constraints, generators, and validators of a schema (JSON Schema syntax is default).
-- **Context** — A time-ordered metadata log of events that have occurred on this unit — rule firings, resolutions, asks, answers, state changes.
+- **Context** — A time-ordered log of what has happened at this unit. Each row records `timestamp`, `channel`, `key`, `value` — rule firings, asks, resolutions, state changes, all in the same shape.
 
 Same four facets everywhere. That uniformity is the geometry. Once it's in place, the invisible becomes addressable with a URL. Before we can do anything, we need to be able to measure it. Without a shared geometry, there's no shared "perspective lines" to make comparisons at all.
 
@@ -85,7 +85,7 @@ Data is part of the Shannon "message" — the communicated information in a tran
 
 For a boundary with m variables, the formula operates on n = 3m verifiable facets — three per variable (Meaning, Structure, Context). r is how many of those facets have been verified. |B_r| is the Hamming ball cardinality. 2ⁿ is the joint configuration space.
 
-Worked example — *δ = 74.61%*. A CSV drop with three variables: Date, Oil Price, Location. Only Date has been fully verified (all 3 of its facets populated); Oil Price and Location are untouched. So m = 3, n = 9, r = 3. The Hamming ball |B_3| = C(9,0) + C(9,1) + C(9,2) + C(9,3) = 1 + 9 + 36 + 84 = 130. That gives δ = 1 − 130/512 = 0.7461.
+Worked example — *δ = 74.61%*. A CSV drop with three variables: Date, Oil Price, Location. Only Date has been fully verified (all 3 of its facets populated); Oil Price and Location are untouched. So m = 3, n = 9, r = 3. The Hamming ball |B_3| = C(9,0) + C(9,1) + C(9,2) + C(9,3) = 1 + 9 + 36 + 84 = 130. That gives δ = 1 − 130/512 = 0.7461 (74.61%).
 
 **The system is operating somewhere in a space of 512 possible configurations but can only confirm 130 of them. 74.61% of the boundary's interpretation space is unreachable by any within-boundary diagnostic.**
 
@@ -139,17 +139,14 @@ In our **Getting Started** example, we will focus on Observatrons across the ent
 - **SQL**: Intent mapping to query slots
 
 
-----
-
 ## What CGP Is
-
 The **Context Graph Protocol** is a syntax that layers over any other syntax — HTML, system prompts, CSV, JSON, SQL, plain text — to bind addressable units across systems to a shared four-facet geometry.
 
 Of the four facets introduced in Step 1, each plays a distinct role:
 
-Data is the Shannon message — the communicated information in a transmission event. It anchors the spike to the observatron's surface.
-Meaning and Structure describe the message statically — what it refers to and how it's encoded.
-Context is different: it's a time-ordered log where external actions leave their trace on the node. If Meaning and Structure describe the message, Context records its collisions with the world. The graph grows by collision.
+- **Data** is the Shannon message — the communicated information in a transmission event. It anchors the spike to the observatron's surface.
+- **Meaning** and **Structure** describe the message statically — what it refers to and how it's encoded.
+- **Context** is different: it's a time-ordered log where external actions leave their trace on the node. If Meaning and Structure describe the message, Context records its collisions with the world. The graph grows by collision.
 
 Because the graph's shape adapts as actions flow through it, we call it Liquid — the protocol's substrate moves between hosts and media without losing identity, taking whichever shape its container demands.
 
@@ -224,8 +221,7 @@ cgp:/s/<system>/o/<observatron>/c/<channel-name>/<event-n>/a/<anchor>/p/<path>
 |---|---|---|
 | system | `s` | Unit of scope. Instantiates observatrons. |
 | observatron | `o` | Agent stationed at a boundary. The node. |
-| channel | `c` | The kind of event — references a definition under `cgp:/root/events/`. The channel name is the segment; the event index follows. |
-| event | — | The instance counter within a channel. Auto-incremented, per-channel, per-observatron. |
+| channel + event | `c` | Compound slot. The channel name identifies the kind of event (referencing a definition under `cgp:/root/events/`); the event counter follows, auto-incrementing per channel, per observatron. Written as `c/<channel-name>/<event-n>`. |
 | anchor | `a` | One anchor produced by an event — one file, one message, one API payload. The base of a set of spikes. |
 | path | `p` | One spike — a column, a field, a JSON Pointer target within the anchor. |
 
@@ -300,3 +296,54 @@ Read a claim left-to-right as a sentence: *at `timestamp`, `source` asserted tha
 When claims are stored as an ordered array, the position in the array is the claim's identity. No `id` column is needed — index N is claim N.
 
 Individual claims become URL-addressable when they need to be referenced: claim N in a channel's log is addressable under `cgp:/s/<s>/o/<o>/c/<channel>/<event-n>`. The URL is constructed on demand from the log's location and the claim's position; it does not live inside the claim itself.
+
+## Structural Compression
+
+CGP gets most of its efficiency from a single design move applied repeatedly: **if a fact is already carried by the structure, the data does not restate it.** Each time the protocol finds a place where structure can carry a fact "for free," a variable disappears from the data without any loss of information.
+
+Three compressions are load-bearing in the protocol, and each reveals the same pattern at a different level.
+
+### Compression 1 — Array Index Doubles as Event Counter
+
+An append-only array's positional index (0, 1, 2, ...) and the URL's `<event-n>` counter are the same integer doing two jobs. Storing both would mean writing the value twice and risking divergence.
+
+The protocol collapses them: **the array index IS the event-n**. One integer does three jobs — array position, event identity, temporal ordering within the channel. See "Identity Is Positional" in the Canonical Claim Form section for how this plays out in practice.
+
+### Compression 2 — URL is Both Location and Instance
+
+Traditional data models separate addresses from content — you have a pointer, you dereference it, you get the value. CGP collapses this: ID, reference, and instance are one concept viewed from three directions (see "IDs, References, and Instances" at the top of this guide).
+
+The consequence: claims can hold URLs in their `channel` and `source` columns without annotating them as references. In CGP, any URL-shaped value *is* a reference — URLs are the only way to address things, and addresses and values are the same structure.
+
+### Compression 3 — Anchor as Geometric Tetrahedron Base
+
+Each spike is a tetrahedron geometrically: a base (Data) pressed flat against the observatron's surface, with three elevated faces (Meaning, Structure, Context) rising above it.
+
+The base isn't just a face — it's the **attachment point**. It's what binds the spike to the node. A tetrahedron without its base isn't a tetrahedron; it's three floating triangles.
+
+This geometric role corresponds exactly to the role `/data` plays in the protocol. `/data` is:
+
+- The Shannon message — the transmitted content.
+- The anchor — what attaches this spike to the observatron.
+- The instance — what the URL returns when dereferenced.
+- The comparison target — what claims assert values against.
+
+One facet doing four jobs. The geometry and the protocol agree: the base of the tetrahedron is where transmission, attachment, identity, and comparison all converge.
+
+### What This Compression Buys: Comparable Claims
+
+When all three compressions are in place, a claim becomes a tuple that reads naturally as physics:
+
+**(TIME, CHANNEL, SOURCE, KEY, VALUE)**
+
+- **TIME**: when the transmission happened (Context timestamp, or the ordinal event-n if you only need ordering)
+- **CHANNEL**: what kind of transmission it was (URL of the event definition)
+- **SOURCE**: who transmitted it (URL of the emitting node)
+- **KEY**: where in the payload (path within the facet)
+- **VALUE**: what was asserted at that position
+
+All five are addressable, all five compose into claims, all five can be compared across observatrons, systems, and time. Because the URL structure carries the first three (CHANNEL, SOURCE, and — via event-n — TIME ordering), only KEY and VALUE live in the claim's row; the rest are derivable from the URL the claim lives at.
+
+The compression isn't a performance optimization. It's the mechanism by which **two independent systems can compare what they saw without sharing any prior schema**. Each system produces URLs that carry their own context. A reader of either system's graph can walk URLs alone to reconstruct most of the picture, dereference `/context` for time, dereference `/data` for values, and compare projections. No lookup table, no translation layer, no schema negotiation.
+
+That's the payoff. Three compressions in the structure, and the output is a protocol where comparability is structural rather than agreed-upon.
