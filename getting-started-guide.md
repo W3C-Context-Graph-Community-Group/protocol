@@ -129,3 +129,98 @@ The system id `root` is reserved for the protocol's own self-description. All ot
 - root
 - claims
 - events
+
+- ## Quick Start
+
+The fastest path from zero to a working CGP observation. Wrap a DOM element, drop a CSV onto it, watch the four-facet graph materialize in real time.
+
+### Install
+
+```bash
+npm install cgp-runtime cgp-components
+```
+
+### Wrap an element
+
+Import the component once at the top of your page, then wrap any element you want to observe with a `<cgp-drag-and-drop>` tag:
+
+```html
+<script type="module">
+  import "cgp-components/drag-and-drop";
+</script>
+
+<cgp-drag-and-drop system-id="0" observatron-id="1">
+  <div class="drop-target">Drop a CSV here</div>
+</cgp-drag-and-drop>
+```
+
+The tag takes two attributes:
+- `system-id` — any URL-safe string; your system's identifier
+- `observatron-id` — any URL-safe string; this observatron's identifier within the system
+
+The wrapper is transparent. The inner `<div>` remains the drop target. On page load, the wrapper instantiates an observatron and mints two nodes: `cgp:/s/0` (the system) and `cgp:/s/0/o/1` (the observatron), each with their four facets populated.
+
+### Listen for state changes
+
+Every observation dispatches a `cgp-state-change` CustomEvent. Listen anywhere on the page:
+
+```html
+<script>
+  document.addEventListener("cgp-state-change", (event) => {
+    console.log(event.detail.state);
+  });
+</script>
+```
+
+The `event.detail.state` is a flat object keyed by URL, with each URL's four facets as its value.
+
+### Drop a CSV
+
+Drop a single-column CSV (say, `sales.csv` with just a `Date` column and two rows) onto the target. The console logs the full URL set:
+
+```json
+{
+  "cgp:/s/0": {
+    "/data": "0",
+    "/meaning": "0",
+    "/structure": { "kind": "system" },
+    "/context": [{ "timestamp": "...", "category": "system-instantiated", "key": "id", "value": "0" }]
+  },
+  "cgp:/s/0/o/1": { "...": "..." },
+  "cgp:/s/0/o/1/e/0": { "...": "..." },
+  "cgp:/s/0/o/1/e/0/d/0": { "...": "..." },
+  "cgp:/s/0/o/1/e/0/d/0/p/0": { "...": "..." }
+}
+```
+
+Five nodes. Twenty facet entries total. Each path node is a spike — a column with its four facets ready for dark fraction measurement.
+
+### What you just ran
+
+The protocol, end to end:
+
+1. **A system was declared** (`cgp:/s/0`) when the page loaded.
+2. **An observatron was stationed** at the wrapped boundary (`cgp:/s/0/o/1`).
+3. **An emission fired** when you dropped the file (`cgp:/s/0/o/1/e/0`).
+4. **A dataset was minted** for the CSV (`cgp:/s/0/o/1/e/0/d/0`).
+5. **A path was minted** for the Date column (`cgp:/s/0/o/1/e/0/d/0/p/0`).
+
+Each node carries its four facets. The Date column's spike has `/data` populated (the values) and `/context` logged (column-detected). Its `/meaning` and `/structure` are partially populated from the header row, but "Date" as a string doesn't tell you the timezone or the semantic domain — which is exactly where dark uncertainty lives.
+
+The remaining sections of this guide explain how to close those gaps: the URL structure that made the nodes addressable, the runtime that minted them, and the derivation algorithm that guarantees any conforming implementation produces the same output from the same input.
+
+## Demonstration of Aligning Context Across Front-End, Back-End, and Agentic Workflow
+
+### End-to-End, Full-Stack, Out-of-the-Box
+Backend -> insert client record with these fields set to those particular values
+
+|   |   |  | 
+|---|---|--|
+|   |   |  |
+
+1. I can instantiate a CGP element in the browser (CSV drag n drop)
+2. I can instantiate a CGP element in the backend for system prompt engineering (update my customer records - customer id matches)
+3. Agentic Workflow
+4. Measure Dark Uncertainty at any temporal point in this chain
+5. Guarantees to allow to Minimize Dark Uncertainty
+   
