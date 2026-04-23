@@ -47,7 +47,18 @@ cgp:/s/0/o/1/c/state-change/4/a/0
 cgp:/s/0/o/1/c/state-change/4/a/0/p/0
   instance: the column's values (the leaf payload)
 ```
+#### Event Position and Time
 
+The `<event-n>` counter in a URL is the event's **position** in its channel's sequence. The event's **time** is recorded separately — as the first row's timestamp in that event's `/context` facet.
+
+These are two projections of the same event along different axes:
+
+- The URL names **which** event (the 5th state-change).
+- The Context log names **when** it happened (ISO 8601 UTC ms).
+
+Position is structural; time is recorded. Clock skew between implementations doesn't affect `<event-n>` — the counter is local and deterministic, so two implementations that both fire three state-change events produce the same URLs regardless of whether their clocks agree. Replaying a claim log on a new system reconstructs URLs identically; only the Context timestamps differ.
+
+This is why URLs don't carry timestamps directly. Position is the URL's job; time is Context's job. Each dimension lives in the place it naturally belongs, and the connection between them is derivable — dereference the URL, read the first Context row, get the time.
 
 ## Motivation
 
